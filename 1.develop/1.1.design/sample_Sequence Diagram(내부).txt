@@ -1,0 +1,90 @@
+@startuml
+!theme mono
+title 마이구독 서비스 상세 시퀀스 다이어그램
+
+
+actor Client
+participant APIGateway
+participant "구독 컨트롤러\n(SubscriptionController)" as SubscriptionController
+participant "구독 서비스\n(SubscriptionService)" as SubscriptionService
+participant "구독 저장소\n(SubscriptionRepository)" as SubscriptionRepository
+database "구독 DB" as SubscriptionDB
+participant "구독추천 서비스" as RecommendationService
+participant "마이그룹 서비스" as MyGroupService
+
+
+' 구독 요약 조회
+Client -> APIGateway: GET /api/users/{userId}/subscriptions/summary
+activate APIGateway
+APIGateway -> SubscriptionController: 구독 요약 조회 요청
+activate SubscriptionController
+SubscriptionController -> SubscriptionService: 사용자 구독 요약 조회
+SubscriptionService -> SubscriptionRepository: 구독 정보 조회
+SubscriptionRepository -> SubscriptionDB: 구독 데이터 조회
+deactivate SubscriptionController
+deactivate APIGateway
+
+
+' 총 구독료 조회
+Client -> APIGateway: GET /api/users/{userId}/subscriptions/total-fee
+activate APIGateway
+APIGateway -> SubscriptionController: 총 구독료 조회 요청
+activate SubscriptionController
+SubscriptionController -> SubscriptionService: 총 구독료 계산
+SubscriptionService -> SubscriptionRepository: 사용자 구독 정보 조회
+SubscriptionRepository -> SubscriptionDB: 구독 데이터 조회
+deactivate SubscriptionController
+deactivate APIGateway
+
+
+' 최대 절감액 조회
+Client -> APIGateway: GET /api/users/{userId}/subscriptions/max-savings
+activate APIGateway
+APIGateway -> SubscriptionController: 최대 절감액 조회 요청
+activate SubscriptionController
+SubscriptionController -> SubscriptionService: 최대 절감액 계산
+SubscriptionService -> SubscriptionRepository: 사용자 구독 정보 조회
+SubscriptionRepository -> SubscriptionDB: 구독 데이터 조회
+deactivate SubscriptionController
+deactivate APIGateway
+
+
+' 구독 목록 조회
+Client -> APIGateway: GET /api/users/{userId}/subscriptions
+activate APIGateway
+APIGateway -> SubscriptionController: 구독 목록 조회 요청
+activate SubscriptionController
+SubscriptionController -> SubscriptionService: 사용자 구독 목록 조회
+SubscriptionService -> SubscriptionRepository: 구독 정보 조회
+SubscriptionRepository -> SubscriptionDB: 구독 데이터 조회
+deactivate SubscriptionController
+deactivate APIGateway
+
+
+' 구독 상세 조회
+Client -> APIGateway: GET /api/subscriptions/{subscriptionId}
+activate APIGateway
+APIGateway -> SubscriptionController: 구독 상세 조회 요청
+activate SubscriptionController
+SubscriptionController -> SubscriptionService: 구독 상세 정보 조회
+SubscriptionService -> SubscriptionRepository: 구독 정보 조회
+SubscriptionRepository -> SubscriptionDB: 구독 데이터 조회
+SubscriptionService -> RecommendationService: 구독 서비스 상세 정보 요청
+deactivate SubscriptionController
+deactivate APIGateway
+
+
+' 구독 취소
+Client -> APIGateway: DELETE /api/users/{userId}/subscriptions/{subscriptionId}
+activate APIGateway
+APIGateway -> SubscriptionController: 구독 취소 요청
+activate SubscriptionController
+SubscriptionController -> SubscriptionService: 구독 취소 처리
+SubscriptionService -> SubscriptionRepository: 구독 정보 삭제
+SubscriptionRepository -> SubscriptionDB: 구독 데이터 삭제
+SubscriptionService -> MyGroupService: 관련 구독그룹 확인 요청
+deactivate SubscriptionController
+deactivate APIGateway
+
+
+@enduml

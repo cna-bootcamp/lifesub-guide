@@ -1,0 +1,135 @@
+@startuml
+!theme mono
+title 마이구독 서비스 - 클래스 다이어그램
+
+
+' Presentation Layer
+package "Presentation Layer" {
+    class MySubController {
+        -mySubService: IMySubService
+        +getTotalSubFee(userId: String): ResponseEntity<Long>
+        +getMaxSavingAmount(userId: String): ResponseEntity<Long>
+        +getMySubList(userId: String): ResponseEntity<List<SubInfoDTO>>
+        +cancelSub(subId: Long): ResponseEntity<Void>
+        +subscribeSub(subId: Long): ResponseEntity<Void>
+    }
+   
+    class SecurityConfig {
+        -jwtTokenProvider: JwtTokenProvider
+        +securityFilterChain(http: HttpSecurity): SecurityFilterChain
+        +corsConfigurationSource(): CorsConfigurationSource
+    }
+   
+    class JwtAuthenticationFilter {
+        -jwtTokenProvider: JwtTokenProvider
+        +doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain): void
+    }
+}
+
+
+' Application Layer
+package "Application Layer" {
+    interface IMySubService {
+        +getTotalSubFee(userId: String): Long
+        +getMaxSavingAmount(userId: String): Long
+        +getMySubList(userId: String): List<MySubDTO>
+        +cancelSub(subId: Long): void
+        +subscribeSub(subId: Long, userId: String): void
+    }
+   
+    class MySubServiceImpl {
+        -mySubRepository: IMySubRepository
+        +getTotalSubFee(userId: String): Long
+        +getMaxSavingAmount(userId: String): Long
+        +getMySubList(userId: String): List<MySubDTO>
+        +cancelSub(subId: Long): void
+        +subscribeSub(subId: Long, userId: String): void
+    }
+   
+    class JwtTokenProvider {
+        -algorithm: Algorithm
+        +createToken(memberEntity: MemberEntity, authorities: Collection<GrantedAuthority>): JwtTokenDTO
+        +validateToken(token: String): int
+        +getAuthentication(token: String): Authentication
+    }
+}
+
+
+' Domain Layer
+package "Domain Layer" {
+    class MySub {
+        -userId: String
+        -subId: Long
+        +getUserId(): String
+        +getSubId(): Long
+    }
+   
+    class MySubDTO {
+        -userId: String
+        -subId: Long
+        +getUserId(): String
+        +getSubId(): Long
+    }
+   
+    class SubInfoDTO {
+        -userId: String
+        -subId: Long
+        +getUserId(): String
+        +getSubId(): Long
+    }
+}
+
+
+' Infrastructure Layer
+package "Infrastructure Layer" {
+    interface IMySubRepository {
+        +findByUserId(userId: String): List<MySubEntity>
+        +findById(subId: Long): Optional<MySubEntity>
+        +delete(mySubEntity: MySubEntity): void
+        +save(mySubEntity: MySubEntity): MySubEntity
+    }
+   
+    class MySubEntity {
+        -userId: String
+        -subId: Long
+        +toDomain(): MySub
+    }
+   
+    class LoggingAspect {
+        +logMethodStart(joinPoint: JoinPoint): void
+        +logMethodEnd(joinPoint: JoinPoint, result: Object): void
+        +logMethodException(joinPoint: JoinPoint, exception: Exception): void
+    }
+   
+    class SpringDocConfig {
+        +openAPI(): OpenAPI
+    }
+   
+    class BizException {
+        +BizException(message: String)
+        +BizException(message: String, cause: Throwable)
+    }
+   
+    class InfraException {
+        -code: int
+        +InfraException(message: String)
+        +InfraException(message: String, cause: Throwable)
+        +InfraException(code: int, message: String)
+        +InfraException(code: int, message: String, cause: Throwable)
+        +getCode(): int
+    }
+}
+
+
+' Relationships
+MySubController --> IMySubService
+MySubServiceImpl ..|> IMySubService
+MySubServiceImpl --> IMySubRepository
+MySubEntity --> MySub: converts to
+JwtAuthenticationFilter --> JwtTokenProvider
+MySubController ..> MySubDTO: uses
+MySubController ..> SubInfoDTO: uses
+IMySubRepository ..> MySubEntity: manages
+
+
+@enduml

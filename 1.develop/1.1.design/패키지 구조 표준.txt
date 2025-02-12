@@ -1,0 +1,132 @@
+패키지 구조 표준
+
+클린 아키텍처 패키지 구조 
+
+├── {SERVICE}-biz
+│   ├── usecase
+│   │   ├── in
+│   │   ├── out
+│   ├── service
+│   └── domain
+├── {SERVICE}-infra
+│   ├── controller
+│   ├── dto
+│   ├── gateway
+│   │   ├── repository
+│   │   └── entity
+│   └── config    
+├── common
+    ├── dto
+    ├── util
+    ├── response
+    └── exception
+
+
+Package명: 
+- com.{ORG}.{ROOT}.{SERVICE}.biz
+- com.{ORG}.{ROOT}.{SERVICE}.biz
+예) com.unicorn.lifesub.mysub.biz, com.unicorn.lifesub.common
+
+변수: 
+- ORG: 회사 또는 조직명
+- ROOT: Root Project 명
+- SERVICE: 서비스명으로 Root Project의 서브 프로젝트임
+
+예시
+
+├── mysub-biz/
+│   └── com.unicorn.lifesub.mysub.biz/
+│       ├── usecase/
+│       │   ├── in/
+│       │   │   ├── TotalFeeInputBoundary.java
+│       │   │   ├── MySubscriptionsInputBoundary.java
+│       │   │   ├── SubscriptionDetailInputBoundary.java
+│       │   │   ├── SubscribeInputBoundary.java
+│       │   │   └── CancelSubscriptionInputBoundary.java
+│       │   └── out/
+│       │       └── SubscriptionDataAccessInterface.java
+│       ├── service/
+│       │   └── MySubscriptionInteractor.java
+│       └── domain/
+│           ├── MySubscription.java
+│           └── Subscription.java
+│
+└── mysub-infra/
+    └── com.unicorn.lifesub.mysub.infra/
+        ├── controller/
+        │   └── MySubController.java
+        ├── dto/
+        │   ├── TotalFeeResponseModel.java
+        │   ├── MySubResponseModel.java
+        │   ├── SubscriptionDetailResponseModel.java
+        │   └── SubscribeResponseModel.java
+        ├── gateway/
+        │   ├── repository/
+        │   │   ├── MySubscriptionJpaRepository.java
+        │   │   └── SubscriptionJpaRepository.java
+        │   ├── entity/
+        │   │   ├── MySubscriptionEntity.java
+        │   │   └── SubscriptionEntity.java
+        │   └── SubscriptionDataAccess.java
+        └── config/
+            ├── JpaConfig.java
+            ├── SecurityConfig.java
+            └── SwaggerConfig.java
+
+
+---
+
+레이어드 아키텍처 패키지 구조
+
+├── {SERVICE}
+│   ├── domain
+│   ├── service
+│   ├── controller
+│   ├── dto
+│   ├── repository
+│   │   ├── jpa
+│   │   └── entity
+│   ├── config
+└── common
+        ├── dto
+        ├── util
+        ├── response
+        └── exception
+
+Package명: 
+- com.{ORG}.{ROOT}.{SERVICE}
+예) com.unicorn.lifesub.mysub, com.unicorn.lifesub.common
+
+변수: 
+- ORG: 회사 또는 조직명
+- ROOT: Root Project 명
+- SERVICE: 서비스명으로 Root Project의 서브 프로젝트임
+
+
+예시
+
+member/
+└── com.unicorn.lifesub.member/
+    ├── domain/
+    │   └── Member.java
+    ├── service/
+    │   ├── MemberService.java
+    │   └── MemberServiceImpl.java
+    ├── controller/
+    │   └── MemberController.java
+    ├── dto/
+    │   ├── LoginRequest.java 
+    │   ├── LogoutRequest.java
+    │   ├── TokenResponse.java
+    │   └── LogoutResponse.java
+    ├── repository/
+    │   ├── jpa/
+    │   │   └── MemberRepository.java
+    │   └── entity/
+    │       └── MemberEntity.java
+    └── config/
+        ├── JpaConfig.java
+        ├── SecurityConfig.java
+        └── SwaggerConfig.java
+
+

@@ -1,0 +1,18 @@
+서비스명|구독추천|구독추천|구독추천|구독추천|구독추천
+마이크로서비스 이름|SubRecommend|SubRecommend|SubRecommend|SubRecommend|SubRecommend
+유저스토리 ID|RSS-005|RSS-015|RSS-020|RSS-025|RSS-030
+유저스토리 제목|추천 구독 카테고리|지출 카테고리 및 총 지출액|구독 카테고리 표시|구독서비스 목록|구독상세
+Controller 이름|RecommendController|RecommendController|RecommendController|RecommendController|RecommendController
+API 목적|최고 지출 카테고리 기반 구독 추천|지출 카테고리 및 총액 조회|구독 카테고리 목록 조회|카테고리별 구독서비스 목록 조회|구독 서비스 상세 정보 조회
+API Method|GET|GET|GET|GET|GET
+API 그룹 Path|/api/recommend|/api/recommend|/api/recommend|/api/recommend|/api/recommend
+API Path|/categories|/expense|/categories|/services|/services/{serviceId}
+Path <변수유형> <변수명>||||Long serviceId
+Query Key|userId|userId||category|
+Query <변수유형> <변수명>|String userId|String userId||String category|
+Request DTO 이름|||||
+Request DTO 배열 여부|||||
+Request DTO 구조|||||
+Response DTO 이름|RecommendCategoryDTO|ExpenseSummaryDTO|CategoryListDTO|ServiceListDTO|ServiceDetailDTO
+Response DTO 배열 여부|No|No|Yes|Yes|No
+Response DTO 구조|String categoryName; String imagePath; String baseDate|String topCategory; int totalExpense|String categoryName|String serviceName; String logoPath; String description; int price|String serviceName; String logoPath; String category; String description; int price; int maxSharedUsers

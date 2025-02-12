@@ -1,0 +1,119 @@
+@startuml
+!theme mono
+
+
+title 요금제 캐싱 시스템 - 논리 아키텍처
+
+
+' 패키지 정의
+package "클라이언트 계층" {
+    [모바일 앱] as mobileApp
+    [웹 앱] as webApp
+}
+
+
+package "게이트웨이 계층" {
+    [Application Gateway] as appGateway
+    note right of appGateway
+        - SSL 종료
+        - 라우팅
+        - WAF 기능
+        - 세션 고정
+    end note
+}
+
+
+package "API 계층" {
+    [App Service] as appService
+    note right of appService
+        Spring Boot 애플리케이션
+    end note
+}
+
+
+package "서비스 계층" {
+    [요금제 컨트롤러] as planController
+    [요금제 서비스] as planService
+    [캐시 서비스] as cacheService
+    [요금제 레포지토리] as planRepository
+   
+    note right of planService
+        - 요금제 CRUD 처리
+        - 캐시 정책 적용
+    end note
+}
+
+
+package "데이터 접근 계층" {
+    [JPA 엔티티] as jpaEntities
+    [JPA 구현체] as jpaImpl
+   
+    note right of jpaEntities
+        @Entity
+        public class UserPlan {
+            @Id Long userId;
+            String planName;
+            String planDetails;
+            LocalDateTime lastUpdated;
+        }
+    end note
+}
+
+
+package "데이터 계층" {
+    database "Azure Cache\nfor Redis" as redisCache {
+        [Cache Entry] as cacheEntry
+    }
+    database "Azure SQL\nDatabase" as sqlDb {
+        [User_Plans Table] as userPlansTable
+    }
+}
+
+
+package "모니터링 계층" {
+    [Azure Monitor] as monitor
+    note right of monitor
+        - 캐시 히트율
+        - DB 성능
+        - 응답시간
+    end note
+}
+
+
+' 관계 정의
+mobileApp --> appGateway : HTTPS
+webApp --> appGateway : HTTPS
+
+
+appGateway --> appService : HTTPS/443
+
+
+appService --> planController : HTTP/8080
+planController --> planService
+planService --> cacheService
+planService --> planRepository
+
+
+planRepository --> jpaEntities
+jpaEntities --> jpaImpl
+jpaImpl --> sqlDb : JDBC
+
+
+cacheService --> redisCache : Redis Protocol/6379
+
+
+monitor --> redisCache : 메트릭 수집
+monitor --> sqlDb : 메트릭 수집
+monitor --> appGateway : 메트릭 수집
+
+
+note right of cacheService
+    캐시 조회/갱신 로직:
+    1. Redis 캐시 조회
+    2. Cache Miss -> JPA로 DB 조회
+    3. DB 데이터를 캐시에 저장 (TTL: 10분)
+    4. 데이터 반환
+end note
+
+
+@enduml

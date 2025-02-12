@@ -1,0 +1,72 @@
+@startuml
+!theme mono
+title 전체 서비스 시퀀스 다이어그램
+
+
+actor Client
+participant APIGateway
+participant "회원 서비스" as MemberService
+participant "구독추천 서비스" as RecommendationService
+participant "마이구독 서비스" as MySubscriptionService
+participant "마이그룹 서비스" as MyGroupService
+participant "이체조회 서비스" as TransactionService
+
+
+' 회원 서비스 호출
+Client -> APIGateway: 회원 관련 요청
+APIGateway -> MemberService: /api/auth/signup
+APIGateway -> MemberService: /api/auth/login
+APIGateway -> MemberService: /api/auth/verify
+APIGateway -> MemberService: /api/auth/refresh
+APIGateway -> MemberService: /api/users/{userId}
+APIGateway -> MemberService: /api/users
+APIGateway -> MemberService: /api/auth/logout
+
+
+' 구독추천 서비스 호출
+Client -> APIGateway: 구독추천 관련 요청
+APIGateway -> RecommendationService: /api/recommendations/categories
+APIGateway -> RecommendationService: /api/recommendations/services
+APIGateway -> RecommendationService: /api/recommendations/expenses
+APIGateway -> RecommendationService: /api/categories
+APIGateway -> RecommendationService: /api/services/{serviceId}
+APIGateway -> RecommendationService: /api/subscriptions
+
+
+' 마이구독 서비스 호출
+Client -> APIGateway: 마이구독 관련 요청
+APIGateway -> MySubscriptionService: /api/users/{userId}/subscriptions/summary
+APIGateway -> MySubscriptionService: /api/users/{userId}/subscriptions/total-fee
+APIGateway -> MySubscriptionService: /api/users/{userId}/subscriptions/max-savings
+APIGateway -> MySubscriptionService: /api/users/{userId}/subscriptions
+APIGateway -> MySubscriptionService: /api/subscriptions/{subscriptionId}
+APIGateway -> MySubscriptionService: /api/users/{userId}/subscriptions/{subscriptionId}
+
+
+MySubscriptionService -> RecommendationService: 서비스 정보 요청
+MySubscriptionService -> MyGroupService: 그룹 정보 확인
+
+
+' 마이그룹 서비스 호출
+Client -> APIGateway: 마이그룹 관련 요청
+APIGateway -> MyGroupService: /api/users/{userId}/total-subscription-fee
+APIGateway -> MyGroupService: /api/users/{userId}/max-savings
+APIGateway -> MyGroupService: /api/users/{userId}/ssups/summary
+APIGateway -> MyGroupService: /api/users/{userId}/ssups
+APIGateway -> MyGroupService: /api/ssups/{ssupId}
+APIGateway -> MyGroupService: /api/ssups
+APIGateway -> MyGroupService: /api/ssups/join
+APIGateway -> MyGroupService: /api/users/{userId}/ssups/{ssupId}
+APIGateway -> MyGroupService: /api/ssups/{ssupId}/transactions
+
+
+MyGroupService -> RecommendationService: 서비스 정보 요청
+MyGroupService -> MySubscriptionService: 구독 정보 요청
+
+
+' 이체조회 서비스 호출
+Client -> APIGateway: 이체내역 조회 요청
+APIGateway -> TransactionService: /api/ssups/{ssupId}/transactions
+
+
+@enduml

@@ -1,0 +1,115 @@
+@startuml
+!theme mono
+
+
+title Resource Group: tiu-dgga-rg - 물리 아키텍처
+
+
+' Azure Resource Group
+rectangle "Resource Group (tiu-dgga-rg)" {
+    ' Virtual Network
+    rectangle "Virtual Network (tiu-dgga-vnet)" {
+        ' AKS Cluster
+        rectangle "AKS Cluster" {
+            rectangle "System Node Pool" {
+                [Ingress Controller] as ingress
+            }
+           
+            rectangle "User Node Pool" {
+                rectangle "Command Service Pod" as cmd_pod {
+                    [Command API] as cmd_api
+                    [Spring Boot App] as cmd_app
+                }
+               
+                rectangle "Query Service Pod" as query_pod {
+                    [Query API] as query_api
+                    [Spring Boot App] as query_app
+                }
+               
+                rectangle "Database Pod" {
+                    database "PostgreSQL\n(Write DB)" as postgres
+                    database "MongoDB\n(Read DB)" as mongodb
+                }
+            }
+        }
+
+
+        ' Subnets
+        rectangle "Subnets" {
+            rectangle "AKS Subnet\n(tiu-dgga-aks-snet)" as aks_subnet
+            rectangle "Private Subnet\n(tiu-dgga-pri-snet)" as pri_subnet
+        }
+    }
+   
+    ' Azure Event Hub
+    component "Event Hub Namespace" as eventhub {
+        queue "Event Hub" as event_queue
+    }
+   
+    ' Azure Load Balancer
+    component "Azure Load Balancer" as load_balancer
+   
+    ' DNS & Monitoring
+    component "Private DNS Zone" as dns
+    component "Application Insights" as app_insights
+}
+
+
+' External Actors
+actor "Client" as client
+actor "Developer" as developer
+
+
+' Network Flow Connections
+client --> load_balancer
+load_balancer --> ingress
+ingress --> cmd_pod : "Write\nRequests"
+ingress --> query_pod : "Read\nRequests"
+
+
+' Data Flow Connections
+cmd_api --> postgres : "Write"
+cmd_api --> event_queue : "Publish Events"
+event_queue --> query_api : "Subscribe Events"
+query_api --> mongodb : "Read/Write"
+
+
+' Monitoring Connections
+cmd_app ..> app_insights : "Telemetry"
+query_app ..> app_insights : "Telemetry"
+
+
+' Development Access
+developer --> aks_subnet : "kubectl"
+
+
+' Legend
+legend right
+| Component | Description |
+|---|---|
+| Infrastructure | AKS Cluster with dual node pools |
+| | Azure Load Balancer for ingress |
+| | Event Hub for event sourcing |
+| Application | Command/Query services |
+| | PostgreSQL for write model |
+| | MongoDB for read model |
+| | Application monitoring |
+endlegend
+
+
+note right of event_queue
+  Event-driven 아키텍처 구현
+  - 비동기 메시지 처리
+  - 시스템 간 결합도 감소
+end note
+
+
+note right of app_insights
+  시스템 모니터링
+  - 성능 메트릭 수집
+  - 로그 분석
+  - 알림 설정
+end note
+
+
+@enduml

@@ -1,0 +1,99 @@
+@startuml
+!theme mono
+title 구독 서비스 - 데이터 모델
+
+' Style configurations
+skinparam linetype ortho
+hide circle
+
+' Member domain entities
+entity "Members" as members {
+  * userId: varchar(50) <<PK>>
+  --
+  userName: varchar(100)
+  bankName: varchar(50)
+  bankAccount: varchar(50)
+  characterId: integer
+}
+
+entity "Accounts" as accounts {
+  * userId: varchar(50) <<PK>>
+  --
+  password: varchar(255)
+}
+
+entity "Account_Roles" as account_roles {
+  * userId: varchar(50) <<FK>>
+  * role: varchar(20)
+  --
+}
+
+' Subscription domain entities
+entity "Categories" as categories {
+  * id: bigint <<PK>>
+  --
+  categoryId: varchar(50)
+  categoryName: varchar(100)
+  spendingCategory: varchar(50)
+}
+
+entity "Subscriptions" as subs {
+  * id: bigint <<PK>>
+  --
+  name: varchar(100)
+  description: text
+  category_id: bigint <<FK>>
+  fee: decimal(15,2)
+  maxShareNum: integer
+  logo: varchar(255)
+}
+
+entity "Spending_History" as spending {
+  * id: bigint <<PK>>
+  --
+  userId: varchar(50)
+  category: varchar(50)
+  amount: decimal(15,2)
+}
+
+' Subscription group domain entities
+entity "My_Subscriptions" as my_sub {
+  * id: bigint <<PK>>
+  --
+  userId: varchar(50)
+  subId: bigint
+}
+
+entity "Subscription_Groups" as subgroup {
+  * groupId: bigint <<PK>>
+  --
+  groupName: varchar(100)
+  subId: bigint
+  leaderId: varchar(50)
+  bankName: varchar(50)
+  bankAccount: varchar(50)
+  paymentDay: integer
+  inviteCode: varchar(20)
+}
+
+entity "Group_Members" as subgroup_member {
+  * groupId: bigint <<FK>>
+  * memberId: varchar(50)
+}
+
+' Relationships
+members ||--|| accounts
+accounts ||--o{ account_roles
+
+categories ||--|{ subs
+
+subs ||--o{ my_sub
+members ||--o{ my_sub
+
+subs ||--o{ subgroup
+members ||--o{ subgroup : leader
+
+subgroup ||--o{ subgroup_member
+members ||--o{ subgroup_member
+
+@enduml
