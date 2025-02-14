@@ -1,0 +1,198 @@
+[테스트 코드 작성]
+{공통 요청사항}
+모든 테스트 코드 시 공통으로 적용되는 요청사항입니다.
+- 'TDD이해'의 '공통전략'을 준용하여 개발
+- 네이밍룰은 'TDD이해'에 정의된 패키지, 클래스, 메소드, 테스트 데이터 네이밍룰을 준용  
+- '개발주석표준'에 따라 주석을 작성. 
+- 테스트 코드 개발 툴은 'Mockito'를 사용  
+- SprintBoot 3.4.0이후 버전에 맞는 Mockito 라이브러리 사용
+- JSON으로 직렬화 되었다가 다시 역직렬화 되어 새로운 객체가 생기는 경우 'any' ArgumentMatcher 사용 
+
+{단위 테스트 코드 작성}
+'tu:'로 시작하면 단위테스트 코드 작성 요청임
+<요청사항>
+- [테스트 코드 작성]의 {공통 요청사항}을 준용하여 개발
+- 'TDD이해'의 '단위 테스트 전략'을 준용하여 개발
+- 요청된 {서비스}의 소스를 분석하여 단위 테스트가 필요한 클래스와 Public Method를 식별  
+<참고자료>
+- TDD이해
+- MergedSource
+<응답순서>
+- 테스트 코드 패키지와 클래스 구조도
+- 테스트 클래스 선정 이유  
+- 테스트 코드: 각 클래스마다 별도의 코드블록으로 제공 
+<응답형식>
+코드블록 
+
+{통합 테스트 코드 작성}
+'ti:'로 시작하면 통합테스트 코드 작성 요청임
+<요청사항>
+- [테스트 코드 작성]의 {공통 요청사항}을 준용하여 개발
+- 'TDD이해'의 '통합 테스트 전략'을 준용하여 개발
+- 요청된 {서비스}의 소스를 분석하여 통합 테스트가 필요한 클래스를 식별 
+- 각 layer별로 모든 통합 테스트 코드를 작성: controller, service, repository
+- 다른 layer는 Mocking하여야 함
+- Spring Security 사용 시 TestSecurityConfig 클래스에서 Security 설정 구성. @Profile로 적용된 프로파일 지정.
+- 테스트 Class에 @ActiveProfile("integration-test")로 지정 
+- Controller 테스트 작성 시 유의사항:
+1. 클래스 구조
+   - @WebMvcTest 사용 (@SpringBootTest 사용하지 않음)
+   - static TestConfig 클래스에서 Controller와 필요한 빈들을 직접 등록
+   - @Import({TestConfig.class, TestSecurityConfig.class}) 순서로 설정
+2. TestConfig 작성 
+   ```
+   @Configuration
+   static class TestConfig implements WebMvcConfigurer {
+       @Bean
+       public TestedController testedController() {
+           return new TestedController(requiredService());
+       }
+       @Bean 
+       public RequiredService requiredService() {
+           return mock(RequiredService.class);
+       }
+   }
+   ```
+3. TestSecurityConfig 작성: Spring Security 사용시 
+  ```
+  @Configuration
+  @Profile("integration-test")
+  public class TestSecurityConfig {
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("public-urls").permitAll()
+                .anyRequest().authenticated()
+            );
+        return http.build();
+    }
+  }
+  ```
+- Service 테스트 작성 시 유의사항:
+  1. 클래스 구조
+     - @ExtendWith(MockitoExtension.class) 사용 (@SpringBootTest 사용하지 않음)
+     - @Mock으로 외부 의존성 처리
+     - @InjectMocks로 테스트 대상 서비스 주입
+     - Spring Security 사용 시 @Import(TestSecurityConfig.class) 설정 
+
+  2. 테스트 메소드 작성
+     ```
+     @Test
+     @DisplayName("테스트 시나리오 설명")
+     void givenCondition_whenAction_thenResult() {
+         // Given
+         given(mockDependency.method()).willReturn(value);
+         
+         // When
+         Result result = service.method();
+         
+         // Then
+         assertThat(result).isNotNull();
+         verify(mockDependency).method();
+     }
+     ```
+- Repository 테스트 작성 시 유의사항:
+  1. 클래스 구조
+     - @DataJpaTest 사용 (@SpringBootTest 사용하지 않음)
+     - @TestInstance(TestInstance.Lifecycle.PER_CLASS) 사용
+     - @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE) 설정
+     - @Testcontainers 설정 
+     - 실제 DB 사용을 위한 TestContainer 구성
+
+  2. TestContainer 설정: 'TestContainer 설정 가이드' 참조
+
+<참고자료>
+- TDD이해
+- MergedSource
+- TestContainer 설정 가이드 
+<응답순서>
+- 테스트 코드 패키지와 클래스 구조도
+- 테스트 클래스 선정 이유  
+- 테스트 코드: 각 클래스마다 별도의 코드블록으로 제공 
+<응답형식>
+코드블록 
+
+{E2E 테스트 코드 작성}
+'te:'로 시작하면 E2E 테스트 코드 작성 요청임
+<요청사항>
+- [테스트 코드 작성]의 {공통 요청사항}을 준용하여 개발
+- 'TDD이해'의 'E2E 테스트 전략'을 준용하여 개발
+- 요청된 {서비스}의 소스를 분석하여 통합 테스트 시나리오를 작성  
+- 테스트 Class에 @ActiveProfile("e2e-test")로 지정 
+- 유의사항:
+  1. 클래스 구조
+     - @SpringBootTest와 WebTestClient 사용
+     - 실제 DB 사용을 위한 TestContainer 구성을 TestContainerConfig에 구현하여 상속 
+     - TestContainerConfig구현은 'TestContainer 설정 가이드' 참조
+  ```
+  @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+  @ActiveProfiles("e2e-test")
+  class ServiceE2ETest extends TestContainerConfig {
+      @Autowired
+      private WebApplicationContext context;
+       
+      private WebTestClient webClient;
+
+      @BeforeEach
+      void setUp() {
+          webClient = MockMvcWebTestClient
+              .bindToApplicationContext(context)
+              .apply(SecurityMockMvcConfigurers.springSecurity())
+              .configureClient()
+              .build();
+      }
+  }
+  ``` 
+  2. TestDataManager 구성
+  ```
+  @Component
+  @RequiredArgsConstructor
+  public class TestDataManager {
+     private final Repository repository;
+     private final PasswordEncoder passwordEncoder;
+    
+     @Value("${test.user.id}")
+     private String TEST_USER_ID;
+    
+     @Transactional
+     public void setupTestData() {
+        // 테스트 데이터 생성 로직
+     }
+  }
+  ```
+  3. WebTestClient를 사용한 API 테스트
+  ```
+  @Test
+  @DisplayName("테스트 시나리오 설명")
+  void scenario() {
+     // Given
+     RequestDTO request = createRequest();
+
+     // When & Then
+     webClient.post().uri("/api/endpoint")
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(request)
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(ApiResponse.class)
+            .value(response -> {
+                assertThat(response.getStatus()).isEqualTo(200);
+                // ... 추가 검증
+            });
+  }
+  ```
+
+<참고자료>
+- TDD이해
+- MergedSource
+- TestContainer 설정 가이드 
+<응답순서>
+- 테스트 코드 패키지와 클래스 구조도
+- 테스트 시나리오와 목적  
+- 테스트 application-e2e-test.yml
+- 테스트 코드: 각 클래스마다 별도의 코드블록으로 제공 
+<응답형식>
+코드블록 
+
