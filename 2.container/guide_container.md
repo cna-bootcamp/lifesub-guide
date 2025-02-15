@@ -527,14 +527,10 @@ docker push dg0200cr.azurecr.io/lifesub/lifesub-web:latest
 ---
 
 ##  컨테이너 실행
-컨테이너를 실행할 VM을 접속합니다.     
-```
-ssh azureuser@{VM IP}
-```
-예시)  
-```
-ssh azureuser@4.217.232.54
-```
+컨테이너를 실행할 VM을 SSH세션을 눌러 접속합니다.     
+아직 안 만들었으면 아래 링크를 참조하여 만듭니다.  
+https://github.com/cna-bootcamp/handson-azure/blob/main/prepare/setup-server.md#mobaxterm-%EC%84%B8%EC%85%98-%EC%9E%91%EC%84%B1  
+
 
 이미지를 다운로드 해야 하기 때문에 ACR에 로그인부터 합니다.   
 ```
@@ -1168,10 +1164,8 @@ docker login {ACR명}.azurecr.io
 docker compose push lifesub-web member mysub recommend 
 ```
 
-VM에 로그인 합니다.  
-```
-ssh azureuser@{VM IP}
-```
+SSH세션을 눌러 VM에 로그인 합니다.  
+
 
 docker-compose 설치를 설치 합니다.    
 ```
