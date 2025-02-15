@@ -6,6 +6,7 @@
 - [Kubernetes 기초](#kubernetes-기초)
   - [목차](#목차)
   - [서비스 배포하기](#서비스-배포하기)
+    - [lifesub-ns의 리소스 삭제](#lifesub-ns의-리소스-삭제)
     - [네임스페이스 생성](#네임스페이스-생성)
     - [Database 설치](#database-설치)
     - [Application 빌드](#application-빌드)
@@ -16,6 +17,16 @@
     - [테스트](#테스트)
 
 ## 서비스 배포하기
+
+### lifesub-ns의 리소스 삭제  
+```
+helm delete member mysub recommend -n lifesub-ns
+k delete pvc --all -n lifesub-ns
+k delete deploy --all -n lifesub-ns
+k delete cm --all -n lifesub-ns
+k delete secret --all -n lifesub-ns
+k delete ns lifesub-ns
+```
 
 ### 네임스페이스 생성
 ```bash
@@ -56,36 +67,57 @@ ACR_PASSWORD=$(az acr credential show -n ${ACR_NAME} --query "passwords[0].value
 echo ${ACR_PASSWORD} | docker login ${ACR_SERVER} -u ${ACR_USERNAME} --password-stdin
 ```
 
-Backend Application 빌드 및 이미지 생성:
+Backend Application 실행파일 작성:
 ```bash
 # lifesub 디렉토리에서 수행
 cd ~/workspace/lifesub
 
 # member 서비스
 ./gradlew :member:clean :member:build -x test
+
+# mysub 서비스
+./gradlew :mysub-infra:clean :mysub-infra:build -x test
+
+# recommend 서비스
+./gradlew :recommend:clean :recommend:build -x test
+```
+
+Backend Application 이미지 생성:
+```bash
+# lifesub 디렉토리에서 수행
+cd ~/workspace/lifesub
+
+# member 서비스
 docker build \
   --build-arg BUILD_LIB_DIR="member/build/libs" \
   --build-arg ARTIFACTORY_FILE="member.jar" \
   -f container/Dockerfile \
   -t dg0200cr.azurecr.io/lifesub/member:1.0.0 .
-docker push dg0200cr.azurecr.io/lifesub/member:1.0.0
 
 # mysub 서비스
-./gradlew :mysub-infra:clean :mysub-infra:build -x test
 docker build \
   --build-arg BUILD_LIB_DIR="mysub-infra/build/libs" \
   --build-arg ARTIFACTORY_FILE="mysub.jar" \
   -f container/Dockerfile \
   -t dg0200cr.azurecr.io/lifesub/mysub:1.0.0 .
-docker push dg0200cr.azurecr.io/lifesub/mysub:1.0.0
 
 # recommend 서비스
-./gradlew :recommend:clean :recommend:build -x test
 docker build \
   --build-arg BUILD_LIB_DIR="recommend/build/libs" \
   --build-arg ARTIFACTORY_FILE="recommend.jar" \
   -f container/Dockerfile \
   -t dg0200cr.azurecr.io/lifesub/recommend:1.0.0 .
+```
+
+Backend Application 이미지 푸시:
+```bash
+# lifesub 디렉토리에서 수행
+docker push dg0200cr.azurecr.io/lifesub/member:1.0.0
+
+# mysub 서비스
+docker push dg0200cr.azurecr.io/lifesub/mysub:1.0.0
+
+# recommend 서비스
 docker push dg0200cr.azurecr.io/lifesub/recommend:1.0.0
 ```
 
