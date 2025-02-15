@@ -135,6 +135,10 @@ docker build \
   --build-arg EXPORT_PORT="18080" \
   -f container/Dockerfile \
   -t dg0200cr.azurecr.io/lifesub/lifesub-web:1.0.0 .
+```
+
+Frontend Application 이미지 푸시:
+```
 docker push dg0200cr.azurecr.io/lifesub/lifesub-web:1.0.0
 ```
 
