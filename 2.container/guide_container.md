@@ -427,7 +427,9 @@ networks:
 기존 이미지 모두 삭제
 ```
 docker ps
-docker stop {
+docker stop {container name} 
+docker container prune
+docker image prune -a
 ```
 
 빌드
@@ -436,18 +438,32 @@ export WORKSPACE=~/home/workspace
 docker-compose build 
 ```
 
-### 실행
+실행
 ```
 docker-compose up -d 
 ```
 
-### 중단
+중단
 ```
 docker-compose down  
 ```
 
-### 이미지 업로드
+이미지 업로드
 ```
+docker login {ACR명}.azurecr.io
 docker-compose push  
 ```
+
+VM에서 실행
+```
+#기존 이미지 모두 삭제
+docker ps
+docker stop {container name} 
+docker container prune
+docker image prune -a
+
+# 실행 
+docker-compose up -d 
+```
+
 
