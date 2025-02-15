@@ -13,7 +13,8 @@
   - [컨테이너 실행](#컨테이너-실행)
   - [기타 Docker 명령](#기타-docker-명령)
   - [Docker Compose](#docker-compose)
-    - [docker-compose.yml](#docker-composeyml)
+    - [WSL에 Docker Compose 설치](#wsl에-docker-compose-설치)
+    - [docker-compose.yml 작성](#docker-composeyml-작성)
     - [로컬에서 테스트](#로컬에서-테스트)
     - [서버에서 테스트](#서버에서-테스트)
 
@@ -90,6 +91,7 @@ az network nsg rule create \
 컨테이너 이미지를 만들어서 이미지 레지스트리에 푸시 해야 겠죠.  
 
 로컬에서 컨테이너 이미지를 생성합니다.     
+
 ### 1.Backend 애플리케이션 
 
 Build Jar: 먼저 실행Jar파일부터 만듭니다.  
@@ -193,6 +195,10 @@ docker images
 ```
 docker images | grep member  
 ```
+
+| [Top](#목차) |
+
+---
 
 ### 2.프론트엔드 애플리케이션
 이제 프론트엔드 애플리케이션인 'lifesub-web'의 컨테이너 이미지를 만들겠습니다.   
@@ -355,6 +361,10 @@ docker build \
 docker images
 ```
 
+| [Top](#목차) |
+
+---
+
 ### 3.로컬에서 테스트  
 로컬에서 먼저 컨테이너를 실행 해 보는게 좋겠죠.  
 잠깐! 그런데 lifesub-web 이미지를 만들 때 backend의 주소를 VM주소로 해서 만들었습니다.  
@@ -432,6 +442,9 @@ ID는 user01~user10이고 암호는 'Passw0rd'입니다.
 잘 하셨습니다.   
 이제 다음 단계로 갑시다!    
 
+| [Top](#목차) |
+
+---
 
 ## Push image
 
@@ -508,6 +521,10 @@ docker push dg0200cr.azurecr.io/lifesub/mysub:latest
 docker push dg0200cr.azurecr.io/lifesub/recommend:latest
 docker push dg0200cr.azurecr.io/lifesub/lifesub-web:latest
 ```
+
+| [Top](#목차) |
+
+---
 
 ##  컨테이너 실행
 컨테이너를 실행할 VM을 접속합니다.     
@@ -587,7 +604,11 @@ docker log -f {container명 또는 container id}
 브라우저에서 최종 확인 합니다.    
 브라우저에서 http://{VM IP}:18080으로 접근해서 테스트 해봅니다.  
 로컬에서 잘 되었으니 서버에서도 잘 될겁니다.  
-  
+
+| [Top](#목차) |
+
+---
+
 ## 기타 Docker 명령  
 로컬에서 기타 Docker 명령을 실습해 보겠습니다.  
 
@@ -861,14 +882,50 @@ http://localhost:8081/swagger-ui.html
 로그인 테스트를 해보면 local db container에 container명(member-db)으로 연결되어  
 정상적으로 수행되는것을 확인하실 수 있을겁니다.    
 
+| [Top](#목차) |
+
 ---
 
 ## Docker Compose
-### docker-compose.yml  
+Docker Comnpose는 여러개의 관련성 있는 서비스의 이미지빌드/Pull/Push/컨테이너 실행을 편리하게 해주는 툴입니다.   
+
+### WSL에 Docker Compose 설치   
+```
+sudo apt-get update
+sudo apt-get install docker-compose-plugin
+```
+
+Docker 재시작
+```
+sudo service docker restart
+```
+
+설치 확인
+```
+docker compose version 
+```
+
+| [Top](#목차) |
+
+---
+
+> **Tip: CLI명 변경**  
+> 최신 Docker에서는 CLI로 'docker-compose' 대신 'docker compose'명령을 사용할 것을 권장합니다.   
+ 
+
+### docker-compose.yml 작성  
+docker-compose.yml은 이미지빌드/Pull/Push/컨테이너 실행을 관리하기 위한 매니페스트 파일입니다.  
+기본 파일명이 'docker-compose.yml'이고 다른 파일로 변경해도 되며, 여러개의 파일을 만드는 것도 당연히 가능합니다.  
+
+아래와 같이 파일을 작성합니다.   
+lifesub-web-local은 로컬 테스트용입니다.  포트 충돌 방지를 위해 외부 포트를 '18081'으로 지정합니다.  
+또한 백엔드 서비스의 'ALLOW_ORIGINS'에도 허용할 3개의 host를 모두 지정하였습니다.   
+```
+cd ~/workspace
+vi docker-compose.yml
+```
 
 ```
-version: '3.8'
-
 services:
   # Backend Services
   member:
@@ -884,7 +941,7 @@ services:
       - "8081:8081"
     environment:
       - POSTGRES_HOST={DB Service L/B IP}
-      - ALLOWED_ORIGINS=http://localhost:18080,http://{VM IP}:18080
+      - ALLOWED_ORIGINS=http://localhost:18080,http://localhost:18081,http://{VM IP}:18080
     restart: unless-stopped
 
   mysub:
@@ -900,7 +957,7 @@ services:
       - "8082:8082"
     environment:
       - POSTGRES_HOST={DB Service L/B IP}
-      - ALLOWED_ORIGINS=http://localhost:18080,http://{VM IP}:18080
+      - ALLOWED_ORIGINS=http://localhost:18080,http://localhost:18081,http://{VM IP}:18080
     restart: unless-stopped
 
   recommend:
@@ -916,7 +973,7 @@ services:
       - "8083:8083"
     environment:
       - POSTGRES_HOST={DB Service L/B IP}
-      - ALLOWED_ORIGINS=http://localhost:18080,http://{VM IP}:18080
+      - ALLOWED_ORIGINS=http://localhost:18080,http://localhost:18081,http://{VM IP}:18080
     restart: unless-stopped
 
   # Frontend Service
@@ -937,16 +994,32 @@ services:
       - "18080:18080"
     restart: unless-stopped
 
+  # Frontend Service
+  lifesub-web-local:
+    build:
+      context: ${WORKSPACE}/lifesub-web
+      dockerfile: container/Dockerfile
+      args:
+        PROJECT_FOLDER: "."
+        REACT_APP_MEMBER_URL: "http://localhost:8081"
+        REACT_APP_MYSUB_URL: "http://localhost:8082"
+        REACT_APP_RECOMMEND_URL: "http://localhost:8083"
+        BUILD_FOLDER: "container"
+        EXPORT_PORT: "18080"
+    image: lifesub-web-local:latest
+    container_name: lifesub-web-local
+    ports:
+      - "18081:18080"
+    restart: unless-stopped
+
 networks:
   default:
-    name: lifesub-network
+    name: lifesub-nw
 
 ```
 
 예시)
 ```
-version: '3.8'
-
 services:
   # Backend Services
   member:
@@ -962,7 +1035,7 @@ services:
       - "8081:8081"
     environment:
       - POSTGRES_HOST=20.249.132.14
-      - ALLOWED_ORIGINS=http://localhost:18080,http://20.39.207.118:18080
+      - ALLOWED_ORIGINS=http://localhost:18080,http://localhost:18081,http://20.39.207.118:18080
     restart: unless-stopped
 
   mysub:
@@ -978,7 +1051,7 @@ services:
       - "8082:8082"
     environment:
       - POSTGRES_HOST=20.249.132.34
-      - ALLOWED_ORIGINS=http://localhost:18080,http://20.39.207.118:18080
+      - ALLOWED_ORIGINS=http://localhost:18080,http://localhost:18081,http://20.39.207.118:18080
     restart: unless-stopped
 
   recommend:
@@ -994,7 +1067,7 @@ services:
       - "8083:8083"
     environment:
       - POSTGRES_HOST=20.249.132.47
-      - ALLOWED_ORIGINS=http://localhost:18080,http://20.39.207.118:18080
+      - ALLOWED_ORIGINS=http://localhost:18080,http://localhost:18081,http://20.39.207.118:18080
     restart: unless-stopped
 
   # Frontend Service
@@ -1015,89 +1088,196 @@ services:
       - "18080:18080"
     restart: unless-stopped
 
+  # Frontend Service(Local 테스트용)
+  lifesub-web-local:
+    build:
+      context: ${WORKSPACE}/lifesub-web
+      dockerfile: container/Dockerfile
+      args:
+        PROJECT_FOLDER: "."
+        REACT_APP_MEMBER_URL: "http://localhost:8081"
+        REACT_APP_MYSUB_URL: "http://localhost:8082"
+        REACT_APP_RECOMMEND_URL: "http://localhost:8083"
+        BUILD_FOLDER: "container"
+        EXPORT_PORT: "18081"
+    image: lifesub-web-local:latest
+    container_name: lifesub-web-local
+    ports:
+      - "18081:18080"
+    restart: unless-stopped
+    
 networks:
   default:
-    name: lifesub-network
+    name: lifesub-nw
 ```
+
+| [Top](#목차) |
+
+---
 
 ### 로컬에서 테스트
-기존 이미지 모두 삭제
+기존 이미지를 모두 삭제 합니다.  
 ```
-docker ps
-docker stop {container name} 
+docker stop $(docker ps -q)
+```
+```
 docker container prune
+```
+```
 docker image prune -a
+docker images
 ```
 
-빌드
+이미지를 한꺼번에 빌드합니다.  
+'build' 뒤에 스페이스로 구분하여 특정 서비스명만 지정할 수도 있습니다.  
 ```
-export WORKSPACE=~/home/workspace
-docker-compose build 
+cd ~/workspace
+export WORKSPACE=~/workspace
+docker compose build 
 ```
 
-실행
 ```
-docker-compose up -d 
+docker images 
 ```
-브라우저에서 http://localhost:18080으로 접근하여 테스트 
 
-중단
+컨테이너를 동시에 실행합니다.  
+'-d'를 붙여 백그라운드로 실행하는게 좋습니다.   
+이 옵션을 안 붙이면 forground로 실행되고 CTRL-C를 누르면 중지되서 불편합니다.   
+'up' 뒤에 스페이스로 구분하여 특정 서비스명만 지정할 수도 있습니다.  
 ```
-docker-compose down  
+docker compose up -d  
+docker compose ps
 ```
+
+브라우저에서 http://localhost:18081으로 접근하여 테스트 합니다.   
+
+컨테이너를 한꺼번에 중단합니다.  
+뒤에 스페이스로 구분하여 특정 서비스명만 지정할 수도 있습니다.  
+```
+docker compose down  
+```
+
+| [Top](#목차) |
+
+---
 
 ### 서버에서 테스트 
-이미지 업로드
+이미지를 한꺼번에 업로드 합니다.  단, lifesub-web-local은 제외 합니다. 
 ```
 docker login {ACR명}.azurecr.io
-docker-compose push  
+docker compose push lifesub-web member mysub recommend 
 ```
 
-docker-compose 설치  
+VM에 로그인 합니다.  
+```
+ssh azureuser@{VM IP}
+```
+
+docker-compose 설치를 설치 합니다.    
 ```
 sudo apt  install docker-compose
 ```
 
+기존 이미지를 모두 삭제 합니다.  
 ```
-#기존 이미지 모두 삭제
-docker ps
-docker stop {container name} 
+docker stop $(docker ps -q)
+```
+```
 docker container prune
+```
+```
 docker image prune -a
+docker images
 ```
 
-docker-compose 생성  
-로컬의 docker-compose.yml 파일과 동일하게 생성  
+docker-compose.yml 파일을 만듭니다.   
+로컬의 docker-compose.yml 파일과 유사하게 생성하는데   
+각 서비스의 build 섹션을 제거하고 lifesub-web-local은 필요 없으므로 제외합니다.    
 ```
 mkdir ~/workspace 
 cd ~/workspace
 vi docker-compose.yml 
 ```
 
-소스 클론
+예제)
 ```
-git clone https://github.com/cna-bootcamp/lifesub -b container
-git clone https://github.com/cna-bootcamp/lifesub-web
+services:
+  # Backend Services
+  member:
+    image: dg0200cr.azurecr.io/lifesub/member:latest
+    container_name: member
+    ports:
+      - "8081:8081"
+    environment:
+      - POSTGRES_HOST=20.249.132.14
+      - ALLOWED_ORIGINS=http://localhost:18080,http://localhost:18081,http://20.39.207.118:18080
+    restart: unless-stopped
+
+  mysub:
+    image: dg0200cr.azurecr.io/lifesub/mysub:latest
+    container_name: mysub
+    ports:
+      - "8082:8082"
+    environment:
+      - POSTGRES_HOST=20.249.132.34
+      - ALLOWED_ORIGINS=http://localhost:18080,http://localhost:18081,http://20.39.207.118:18080
+    restart: unless-stopped
+
+  recommend:
+    image: dg0200cr.azurecr.io/lifesub/recommend:latest
+    container_name: recommend
+    ports:
+      - "8083:8083"
+    environment:
+      - POSTGRES_HOST=20.249.132.47
+      - ALLOWED_ORIGINS=http://localhost:18080,http://localhost:18081,http://20.39.207.118:18080
+    restart: unless-stopped
+
+  # Frontend Service
+  lifesub-web:
+    image: dg0200cr.azurecr.io/lifesub/lifesub-web:latest
+    container_name: lifesub-web
+    ports:
+      - "18080:18080"
+    restart: unless-stopped
+    
+networks:
+  default:
+    name: lifesub-nw
 
 ```
 
-이미지 다운로드
+이미지 다운로드를 합니다.  
+사실 이 과정은 생략해도 됩니다.  실행 시 로컬에 이미지가 없으면 자동으로 다운로드하기 때문입니다.  
 ```
 export WORKSPACE=~/workspace
 
-docker-compose pull  
+docker compose pull  
 ```
 
-실행 
+이제 서버에서 컨테이너를 한꺼번에 실행 합니다.    
 ```
-docker-compose up -d 
-docker-compose ps
+docker compose up -d 
+docker compose ps
 ```
-브라우저에서 http://{VM IP}:18080으로 접근하여 테스트  
+브라우저에서 http://{VM IP}:18080으로 접근하여 테스트 합니다.    
 
 
-중단
+컨테이너를 중단 합니다.  
 ```
-docker-compose down  
+docker compose down  
 ```
 
+이미지를 모두 삭제 합니다.  
+```
+docker image prune -a 
+```
+
+| [Top](#목차) |
+
+---
+
+Container 이해의 모든 과정을 완료 하셨습니다.  
+수고 많으셨습니다.  
+  
+![](images/2025-02-16-00-12-05.png)
