@@ -208,6 +208,22 @@ mkdir -p lifesub/deployment/manifest/{configmaps,secrets,deployments,services}
 mkdir -p lifesub-web/deployment/manifest/{deployments,services}
 ```
 
+ALLOWED_ORIGINS값을 동적으로 변경하여 common-config.yaml 생성  
+```
+# Ingress External IP 가져오기
+ingress_host=$(kubectl get svc ingress-nginx-controller -n ingress-basic -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+
+cat > lifesub/deployment/manifest/configmaps/common-config.yaml << EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: common-config
+data:
+  JPA_DDL_AUTO: update
+  JPA_SHOW_SQL: "true"
+  ALLOWED_ORIGINS: "http://localhost:18080,http://localhost:18081,http://${ingress_host}"
+EOF
+```
 ### Manifest 점검 및 실행
 DB Service 이름 확인:
 ```bash
