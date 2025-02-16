@@ -170,7 +170,7 @@ k get svc -n ingress-basic
 cd ~/workspace/lifesub-web
 
 ingress_host=$(kubectl get svc ingress-nginx-controller -n ingress-basic -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
-
+echo "Ingress Host: ${ingress_host}"  
 docker build \
   --build-arg PROJECT_FOLDER="." \
   --build-arg REACT_APP_MEMBER_URL="http://${ingress_host}/member" \
