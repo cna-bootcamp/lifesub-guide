@@ -169,11 +169,12 @@ k get svc -n ingress-basic
 # lifesub-web 디렉토리에서 수행
 cd ~/workspace/lifesub-web
 
+ingress_host="20.249.185.127"
 docker build \
   --build-arg PROJECT_FOLDER="." \
-  --build-arg REACT_APP_MEMBER_URL="http://{Ingress host}/member" \
-  --build-arg REACT_APP_MYSUB_URL="http://{Ingress host}/mysub" \
-  --build-arg REACT_APP_RECOMMEND_URL="http://{Ingress host}/recommend" \
+  --build-arg REACT_APP_MEMBER_URL="http://${ingress_host}/member" \
+  --build-arg REACT_APP_MYSUB_URL="http://${ingress_host}/mysub" \
+  --build-arg REACT_APP_RECOMMEND_URL="http://${ingress_host}/recommend" \
   --build-arg BUILD_FOLDER="container" \
   --build-arg EXPORT_PORT="18080" \
   -f container/Dockerfile \
