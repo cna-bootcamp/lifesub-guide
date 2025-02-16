@@ -670,9 +670,257 @@ ConfigMap과 Secret의 생성과 사용 방식 차이는 아래와 같습니다.
 따라서 **데이터를 안전하게 보존하면서 읽고 쓰기 위해서 외부 볼륨이 필요**한 겁니다.      
    
 2)사용목적별 볼륨 유형    
-![](images/2025-02-16-17-32-37.png)  
+![](images/2025-02-16-18-47-06.png)  
 
-   
+**2.1) 파드 로컬 볼륨: emptyDir**    
+일반적인 사용 예시    
+```
+...
+    spec:
+      containers:
+      - name: emptydir
+        image: hiondal/hello
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - mountPath: /cache
+          name: cache
+      volumes:
+      - name: cache
+        emptyDir: {}
+```
+  
+메모리를 볼륨처럼 사용하는 예시   
+```
+...
+    spec:
+      containers:
+      - name: emptydir
+        image: hiondal/hello
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - mountPath: /cache
+          name: cache
+      volumes:
+      - name: cache
+        emptyDir:
+          medium: Memory
+```
+
+**2.2) 파드 로컬 볼륨:컨피그맵과 시크릿을 컨테이너 내부 볼륨으로 마운트**      
+
+```
+...
+    spec:
+      containers:
+      - name: emptydir
+        volumeMounts:
+        - name: myconfig
+          mountPath: /home/config
+        - name: mysecret
+          mountPath: /home/secret/secret.conf
+          subPath: secret.conf
+      volumes:
+      - name: myconfig
+        configMap:
+          name: cm3
+      - name: mysecret
+        secret:
+          secretName: secret3
+```
+
+**2.3) 파드 로컬 볼륨: downwardAPI**   
+파드 매니페스트에 정의한 내용을 볼륨으로 마운트하여 사용하는 방식입니다.      
+
+![](images/2025-02-16-18-59-55.png) 
+
+```
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: downwardapi
+  namespace: ott
+spec:
+  selector:
+    matchLabels:
+      app: downwardapi
+  replicas: 1
+  serviceName: downwardapi
+  template:
+    metadata:
+      labels:
+        app: downwardapi
+    spec:
+      serviceAccount: sa-ott
+      containers:
+      - name: downwardapi
+        image: hiondal/hello
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: 128m
+            memory: 256Mi
+          limits:
+            cpu: 256m
+            memory: 512Mi
+
+        env:
+        - name: THIS_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: THIS_NODE_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: THIS_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: THIS_SERVICE_ACCOUNT
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.serviceAccountName
+
+        volumeMounts:
+        - mountPath: /info/pod
+          name: podinfo
+        - mountPath: /info/container
+          name: containerinfo
+      volumes:
+      - name: podinfo
+        downwardAPI:
+          items:
+          - path: namespace
+            fieldRef:
+              fieldPath: metadata.namespace
+          - path: podname
+            fieldRef:
+              fieldPath: metadata.name
+          - path: poduid
+            fieldRef:
+              fieldPath: metadata.uid
+          - path: labels
+            fieldRef:
+              fieldPath: metadata.labels['app']
+          - path: annotations
+            fieldRef:
+              fieldPath: metadata.annotations
+
+      - name: containerinfo
+        downwardAPI:
+          items:
+          - path: "cpu_limit"
+            resourceFieldRef:
+              containerName: downwardapi
+              resource: limits.cpu
+              divisor: 1m
+          - path: "cpu_request"
+            resourceFieldRef:
+              containerName: downwardapi
+              resource: requests.cpu
+              divisor: 1m
+          - path: "mem_limit"
+            resourceFieldRef:
+              containerName: downwardapi
+              resource: limits.memory
+              divisor: 1Mi
+          - path: "mem_request"
+            resourceFieldRef:
+              containerName: downwardapi
+              resource: requests.memory
+              divisor: 1Mi
+```
+  
+**2.4) 노드 로컬 스토리지: hostPath**   
+```
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: ott
+  labels:
+    service: ott
+spec:
+  storageClassName: standard
+  capacity:
+    storage: 1Gi
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
+  hostPath:
+    path: /data/ott
+    type: Directory
+```
+
+**2.5) 노드 로컬 스토리지: persistentVolumeClaim**     
+DB파드는 각 파드가 자신이 사용할 고유한 스토리지가 있어야 합니다.  
+이를 위해 StatefulSet 매니페스트에 사용할 PVC를 'persistentVolumeClaim'으로 정의합니다.   
+```
+…
+spec:
+  …
+  replicas: 2
+  …
+  template:
+    …
+    spec:
+      serviceAccount: sa-ott
+      containers:
+        …
+        volumeMounts:
+        - name: data
+          mountPath: /home/docker/data
+          readOnly: true
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: ott
+          readOnly: true
+```
+
+**2.6) 노드 로컬 볼륨: local 볼륨**    
+local볼륨은 자신이 사용할 볼륨이 특정 노드(들)에 있는 경우   
+자신 파드가 그 특정 노드(들)에 배포 되도록 할 때 유용 합니다.  
+  
+아래 파드는 'node-role.kubernetes.io/control-plane' 레이블을 갖고 있는 노드들에 배포됩니다.  
+```
+
+…
+  persistentVolumeReclaimPolicy: Retain
+  local:
+    path: /data/ott
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+```
+
+2.7) 네트워크 볼륨  
+
+```
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: ott
+  labels:
+    service: ott
+spec:
+  storageClassName: standard
+  capacity:
+    storage: 1Gi
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
+  nfs:
+    server: 10.178.189.25
+    path: /data
+```
+
+쿠버네티스가 지원하는 네트워크 스토리지 볼륨을 정리하면 아래와 같습니다.  
+![](images/2025-02-16-19-21-16.png)    
+
+
 3)파드의 볼륨 접근 아키텍처   
 기본적인 원리는 아래와 같이 '마운트'입니다.   
 ![](images/2025-02-16-17-33-50.png)  
