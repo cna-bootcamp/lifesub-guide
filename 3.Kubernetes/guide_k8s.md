@@ -597,6 +597,30 @@ management:
 ConfigMap과 Secret의 생성과 사용 방식 차이는 아래와 같습니다.      
 ![](images/2025-02-16-17-18-52.png)   
 
+- 환경설정 파일 이용 방식은 파일에 키와 밸류로 구성된 환경변수들을 정의하고 그 파일을 이용하여 컨피그맵이나 시크릿을 만드는 방식입니다.   
+  환경변수 이름에는 언더바를 쓰시는게 제일 안전합니다.  
+- 파일 내용을 컨피그맵으로 만들어 파드 안에 파일로 마운트 시켜야 하는 경우 '일반 파일 이용방식'을 사용합니다.  
+  환경변수명은 파일명이 되고 그 내용은 파일의 내용으로 생성됩니다.   
+  ```
+  k create cm cm3 --from-file=cm.conf --from-file=imgreg.conf
+  k describe cm cm3
+  …
+  Data
+  ====
+  cm.conf:
+  ----
+  {
+    name: "busybox"
+    description: "test config"
+  }
+  imgreg.conf:
+  ----
+  registry=docker.io
+  organization=hiondal
+  repo=member
+  ```
+  
+
 1)볼륨으로 마운트하기   
 위 표의 사용 예와 같이 파드에 환경변수를 주입하는 방법 외에 파드 내 특정 볼륨(디렉토리)에 마운트 할 수도 있습니다.   
 이러한 볼륨 마운트를 하는 이유는 볼륨 마운트된 **컨피그맵과 시크릿의 내용이 변경되면 파드 안에도 동적으로 반영** 하기 위해서입니다.    
