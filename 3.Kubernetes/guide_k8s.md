@@ -8,7 +8,7 @@
   - [ingress controller 추가](#ingress-controller-추가)
   - [사전준비](#사전준비)
   - [네임스페이스 생성](#네임스페이스-생성)
-    - [Database 설치](#database-설치)
+  - [Database 설치](#database-설치)
   - [Backend Application 실행파일 빌드](#backend-application-실행파일-빌드)
   - [컨테이너 이미지 빌드](#컨테이너-이미지-빌드)
     - [Backend Application](#backend-application)
@@ -163,7 +163,7 @@ k create ns ${ID}-lifesub-ns 2>/dev/null || true
 kubens {ID}-lifesub-ns
 ```
 
-### Database 설치
+## Database 설치
 각 백엔드 서비스를 위한 PostgreSQL DB를 설치합니다.  
 역시 Helm 차트로 설치합니다.  
 
