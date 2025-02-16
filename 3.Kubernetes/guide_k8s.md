@@ -422,7 +422,7 @@ spec:
 2)Service 유형  
 Service 리소스의 'type'은 3가지가 있습니다.  
 - ClusterIP:   
-  - 내부IP만을 가짐  
+  - 내부IP와 서비스 포트만 부여됨    
   - k8s 클러스터 내부에서만 접근 가능: http://{Service명}.{네임스페이스}.svc.cluster.local:{Service 포트}로 호출    
   - 동일 네임스페이스의 서비스는 http://{Service명}:{Service 포트}로 호출 가능    
 - NodePort: 
