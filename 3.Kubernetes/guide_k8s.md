@@ -20,6 +20,11 @@
   - [Kubernetes Manifest 준비](#kubernetes-manifest-준비)
     - [ALLOWED\_ORIGINS값 셋팅](#allowed_origins값-셋팅)
     - [매니페스트 이해](#매니페스트-이해)
+      - [**1.Ingress**](#1ingress)
+      - [**2.Service**](#2service)
+      - [**3.Workload Controller**](#3workload-controller)
+      - [**4.ConfigMap과 Secret**](#4configmap과-secret)
+      - [**5.PV/PVC**](#5pvpvc)
   - [Manifest 점검 및 실행](#manifest-점검-및-실행)
   - [manifest 실행](#manifest-실행)
   - [정상 배포 확인](#정상-배포-확인)
@@ -371,7 +376,7 @@ Deployment, StatefulSet, DaemonSet, Job, CronJob이 그것이죠.
 Backend 매니페스트  
 ![](images/2025-02-16-15-14-50.png)  
 
-**1.Ingress**  
+#### **1.Ingress**  
 path '/member(/|$)(.*)'에서 '(/|$)'부분이 '$1'이고 '(.*)'부분이 '$2'가 됩니다.  
 'nginx.ingress.kubernetes.io/rewrite-target'에 의해서 'member/'부분은 사라지고   
 그 뒤의 값으로 rewriting 됩니다.   
@@ -400,7 +405,11 @@ spec:
 ```
 더 자세한 정보를 원하시면 [서비스 로드 밸런서 인그레스](https://happycloud-lee.tistory.com/254)을 참조하세요.      
 
-**2.Service**   
+| [Top](#목차) |
+
+---
+
+#### **2.Service**   
 1)로드밸런싱   
 selector에 정의한 대로 'app=member' Label으로 생성된 Pod를 로드밸런싱 합니다.  
 Service객체는 '80'으로 요청을 받아 대상 Pod의 '8081'포트로 바인딩합니다.  
@@ -452,8 +461,11 @@ Service 리소스의 'type'은 3가지가 있습니다.
 
 직접 실습까지 하고 싶으면 [파드 로드 밸런서 서비스](https://happycloud-lee.tistory.com/253)를 참조하세요.   
 
+| [Top](#목차) |
+
+---
    
-**3.Workload Controller**   
+#### **3.Workload Controller**   
 1)워크로드 컨트롤러의 유형은 아래와 같습니다.   
 ![](images/2025-02-16-16-36-12.png)  
   
@@ -592,7 +604,11 @@ management:
 자주 사용되는 워크로드 컨트롤러는 아닙니다.   
 [파드 실행 및 통제를 위한 워크로드 컨트롤러](https://happycloud-lee.tistory.com/252)을 참조 하세요.   
 
-**4.ConfigMap과 Secret**       
+| [Top](#목차) |
+
+---
+
+#### **4.ConfigMap과 Secret**       
 
 ConfigMap과 Secret의 생성과 사용 방식 차이는 아래와 같습니다.      
 ![](images/2025-02-16-17-18-52.png)   
@@ -642,7 +658,11 @@ ConfigMap과 Secret의 생성과 사용 방식 차이는 아래와 같습니다.
 
 더 자세한 정보와 실습까지 하려면 [환경변수 컨피그맵과 시크릿](https://happycloud-lee.tistory.com/255)을 참조하세요.    
 
-**5.PV/PVC**  
+| [Top](#목차) |
+
+---
+
+#### **5.PV/PVC**  
 
 1)컨테이너에서 외부 볼륨의 필요성   
 컨테이너는 언제라도 사라질 수 있기 때문입니다.   
