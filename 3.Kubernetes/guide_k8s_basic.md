@@ -48,44 +48,6 @@ controller:
 helm upgrade -i ingress-nginx -f ingress-values.yaml -n ingress-basic ingress-nginx/ingress-nginx
 ```
 
-```
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: backend-ingress
-  annotations:
-    kubernetes.io/ingress.class: nginx
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
-    nginx.ingress.kubernetes.io/use-regex: "true"
-spec:
-  ingressClassName: nginx
-  rules:
-  - http:
-      paths:
-      - path: /member(/|$)(.*)
-        pathType: ImplementationSpecific
-        backend:
-          service:
-            name: member
-            port:
-              number: 80
-      - path: /mysub(/|$)(.*)
-        pathType: ImplementationSpecific
-        backend:
-          service:
-            name: mysub
-            port:
-              number: 80
-      - path: /recommend(/|$)(.*)
-        pathType: ImplementationSpecific
-        backend:
-          service:
-            name: recommend
-            port:
-              number: 80
-
-```
-
 ## 서비스 배포하기
 
 ### lifesub-ns의 리소스 삭제  
