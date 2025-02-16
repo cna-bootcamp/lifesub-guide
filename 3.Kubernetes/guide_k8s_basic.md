@@ -75,13 +75,13 @@ kubens dg0200-lifesub-ns
 
 Helm repository 추가 
 ```
-$ helm repo ls
+helm repo ls
 ```
 
 없으면 추가
 ```
-$ helm repo add bitnami https://charts.bitnami.com/bitnami
-$ helm repo update
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update
 ```
 
 ```
