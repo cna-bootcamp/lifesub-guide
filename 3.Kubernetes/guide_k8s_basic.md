@@ -1,14 +1,13 @@
 # Kubernetes 기초  
 
-개발한 구독관리 서비스를 컨테이너 이미지로 빌드하고 배포하면서 컨테이너 기술에 대해 이해합니다.  
+개발한 구독관리 서비스를 컨테이너 이미지로 빌드하고 AKS에 배포하면서 쿠버네티스에 대해 이해합니다.  
 
 ## 목차
 - [Kubernetes 기초](#kubernetes-기초)
   - [목차](#목차)
   - [ingress controller 추가](#ingress-controller-추가)
-  - [서비스 배포하기](#서비스-배포하기)
-    - [lifesub-ns의 리소스 삭제](#lifesub-ns의-리소스-삭제)
-    - [네임스페이스 생성](#네임스페이스-생성)
+  - [사전준비](#사전준비)
+  - [네임스페이스 생성](#네임스페이스-생성)
     - [Database 설치](#database-설치)
     - [Application 빌드](#application-빌드)
     - [Kubernetes Manifest 생성](#kubernetes-manifest-생성)
@@ -17,8 +16,26 @@
     - [정상 배포 확인](#정상-배포-확인)
     - [테스트](#테스트)
 
-## ingress controller 추가
+---
 
+## ingress controller 추가
+쿠버네티스 설치 시 Ingress Controller가 기본으로 설치 안되기 때문에 먼저 그거부터 설치해야 합니다.  
+Ingress Controller 중 가장 많이 사용하는 nginx ingress controller를 추가합니다.  
+
+작업 디렉토리를 먼저 만듭니다.  
+```
+mkdir -p ~/install/ingress-controller && cd ~/install/ingress-controller 
+```
+
+helm으로 설치할 겁니다.  
+따라서 helm repository 부터 추가해야겠죠?  
+```
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update 
+```
+
+아래 내용으로 ingress-values.yaml 파일을 만듭니다.  
+appProtocol 옵션을 비활성해야 제대로 생성이 됩니다.  
 ```
 controller:
   replicaCount: 1
@@ -44,13 +61,66 @@ controller:
 
 ```
 
+ingress-basic 네임 스페이스에 설치 합니다.    
 ```
-helm upgrade -i ingress-nginx -f ingress-values.yaml -n ingress-basic ingress-nginx/ingress-nginx
+helm upgrade -i ingress-nginx -f ingress-values.yaml \
+-n ingress-basic --create-namespace ingress-nginx/ingress-nginx 
 ```
 
-## 서비스 배포하기
+제대로 생성되었는지 체크해 봅니다.   
+```
+k get svc -n ingress-basic
+k get po -n ingress-basic
+```
 
-### lifesub-ns의 리소스 삭제  
+잠깐 ingress controller가 어떻게 외부의 요청을 내부로 연결할까요?  
+ingress controller 파드는 준실시간으로 ingress object들의 설정을 읽어 내부의 nginx.conf파일에 업데이트 합니다.  
+외부에서는 ingress-nginx-controller의 L/B IP로 접근합니다.  
+이 트래픽 요청의 Host와 경로에 따라 적절한 서비스 오브젝트로 proxying합니다.    
+결론적으로 외부의 트래픽을 내부로 전달하는 것은 인그레스 오브젝트가 아니라 인그레스 컨트롤러 파드드인것입니다.  
+![](images/2025-02-16-13-58-13.png)
+
+내친김에 ingress controller pod의 nginx.conf 내용도 볼까요? 
+아직 ingress 오브젝트를 만들지 않았기 때문에 지금은 실습 못하지만,  
+이 실습이 완료된 후에 한번 직접 확인해 보십시오.  
+```
+k get po -n ingress-basic
+
+k exec -it {ingress controller pod}  -n ingress-basic -- bash
+ingress-nginx-controller-5d9dcdb7b8-dx65z:/etc/nginx$ cat nginx.conf | more
+```
+
+스페이스를 눌러 내려가다 보면 아래 예와 같은 설정이 있는걸 확인할 수 있을겁니다.  
+보시면 아시겠죠? ingress 오브젝트 'backend-ingress'의 설정이 그대로 반영되어 있습니다.   
+```
+## start server _
+server {
+    ...
+    location ~* "^/recommend(/|$)(.*)" {
+
+        set $namespace      "dg0200-lifesub-ns";
+        set $ingress_name   "backend-ingress";
+        set $service_name   "recommend";
+        set $service_port   "80";
+        set $location_path  "/recommend(/|${literal_dollar})(.*)";
+        ...
+ 
+        # Custom Response Headers
+        rewrite "(?i)/recommend(/|$)(.*)" /$2 break;
+        proxy_pass http://upstream_balancer;
+    }
+    ...
+}
+```
+
+| [Top](#목차) |
+
+---
+
+## 사전준비 
+
+1.lifesub-ns의 리소스 삭제  
+AKS의 자원이 부족할 수 있으므로 이전에 실습한 lifesub-ns의 모든 리소스부터 정리하겠습니다.    
 ```
 helm delete member mysub recommend -n lifesub-ns
 k delete pvc --all -n lifesub-ns
@@ -60,30 +130,33 @@ k delete secret --all -n lifesub-ns
 k delete ns lifesub-ns
 ```
 
+2.실행을 위한 전역변수 셋팅
+```
+export ID={본인ID}
+
+```
+
+| [Top](#목차) |
+
 ---
 
-
-
-### 네임스페이스 생성
+## 네임스페이스 생성
 ```bash
-kubectl create ns dg0200-lifesub-ns 2>/dev/null || true
-kubens dg0200-lifesub-ns
+k create ns ${ID}-lifesub-ns 2>/dev/null || true
+kubens {ID}-lifesub-ns
 ```
 
 ### Database 설치
-각 백엔드 서비스는 PostgreSQL DB를 사용:
+각 백엔드 서비스를 위한 PostgreSQL DB를 설치합니다.  
+역시 Helm 차트로 설치합니다.  
 
-Helm repository 추가 
-```
-helm repo ls
-```
-
-없으면 추가
+Helm repository를 추가하고요. 
 ```
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo update
 ```
 
+미리 만들어진 
 ```
 cd ~/workspace/lifesub
 chmod +x deployment/database/deploy_db.sh

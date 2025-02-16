@@ -6,6 +6,7 @@
   - [목차](#목차)
   - [VM 생성](#vm-생성)
   - [컨테이너 이미지 빌드](#컨테이너-이미지-빌드)
+    - [실습을 위한 소스 Clone](#실습을-위한-소스-clone)
     - [1.Backend 애플리케이션](#1backend-애플리케이션)
     - [2.프론트엔드 애플리케이션](#2프론트엔드-애플리케이션)
     - [3.로컬에서 테스트](#3로컬에서-테스트)
@@ -90,6 +91,16 @@ az network nsg rule create \
 개발이 어느정도 끝났습니다.   
 컨테이너 이미지를 만들어서 이미지 레지스트리에 푸시 해야 겠죠.  
 
+### 실습을 위한 소스 Clone
+
+```
+cd ~/workspace
+git clone https://github.com/cna-bootcamp/lifesub.git -b container
+git clone https://github.com/cna-bootcamp/lifesub-web.git
+```
+만약 기존에 있다면 지우거나 옮기시고 하십시오.  
+    
+    
 로컬에서 컨테이너 이미지를 생성합니다.     
 
 ### 1.Backend 애플리케이션 
