@@ -14,6 +14,8 @@
   - [수동 스케일링: kubectl scale](#수동-스케일링-kubectl-scale)
   - [파드 재시작 하기: kubectl rollout](#파드-재시작-하기-kubectl-rollout)
   - [k8s 클러스터 외부에서 포트 Forward하여 파드 접근하기: kubectl port-forward](#k8s-클러스터-외부에서-포트-forward하여-파드-접근하기-kubectl-port-forward)
+  - [유지보수 관련 명령: cordon, uncordon, drain, taint](#유지보수-관련-명령-cordon-uncordon-drain-taint)
+  - [k9s](#k9s)
 
 
 ## 로그인
@@ -393,3 +395,90 @@ k port-forward svc member 8888:80
 | [Top](#목차) |
 
 ---
+
+## 유지보수 관련 명령: cordon, uncordon, drain, taint
+각 명령어들은 쿠버네티스 노드 관리를 위한 kubectl 명령어들입니다.    
+
+1.cordon/uncordon: 노드에 새로운 파드가 스케줄링되는 것을 방지하거나 방지 해제  
+cordon 된 노드는 STATUS에 'SchedulingDisabled'라고 표시됩니다.     
+```bash
+ubuntu@dreamondal:~$ k get nodes
+NAME                                STATUS   ROLES    AGE    VERSION
+aks-nodepool1-18726331-vmss000000   Ready    <none>   2d9h   v1.30.9
+aks-nodepool1-18726331-vmss000001   Ready    <none>   2d9h   v1.30.9
+aks-nodepool1-18726331-vmss000006   Ready    <none>   18h    v1.30.9
+aks-nodepool1-18726331-vmss000008   Ready    <none>   9h     v1.30.9
+ubuntu@dreamondal:~$ k cordon aks-nodepool1-18726331-vmss000008
+node/aks-nodepool1-18726331-vmss000008 cordoned
+ubuntu@dreamondal:~$ k get nodes
+NAME                                STATUS                     ROLES    AGE    VERSION
+aks-nodepool1-18726331-vmss000000   Ready                      <none>   2d9h   v1.30.9
+aks-nodepool1-18726331-vmss000001   Ready                      <none>   2d9h   v1.30.9
+aks-nodepool1-18726331-vmss000006   Ready                      <none>   18h    v1.30.9
+aks-nodepool1-18726331-vmss000008   Ready,SchedulingDisabled   <none>   9h     v1.30.9
+ubuntu@dreamondal:~$ k uncordon aks-nodepool1-18726331-vmss000008
+node/aks-nodepool1-18726331-vmss000008 uncordoned
+ubuntu@dreamondal:~$ k get nodes
+NAME                                STATUS   ROLES    AGE    VERSION
+aks-nodepool1-18726331-vmss000000   Ready    <none>   2d9h   v1.30.9
+aks-nodepool1-18726331-vmss000001   Ready    <none>   2d9h   v1.30.9
+aks-nodepool1-18726331-vmss000006   Ready    <none>   18h    v1.30.9
+aks-nodepool1-18726331-vmss000008   Ready    <none>   9h     v1.30.9
+```
+
+2.drain: 노드의 파드들을 다른 노드로 이동  
+노드의 유지보수 준비를 위해 모든 파드를 내쫒는 명령입니다.  
+실습하지는 마세요.  
+```bash
+# node1의 모든 파드를 다른 노드로 이동
+kubectl drain node1 --ignore-daemonsets
+```
+
+3.taint: 노드에 테인트를 설정하여 파드 스케줄링 제어   
+cordon처럼 노드에 모든 스케쥴링을 금지하는게 아니라 특정 조건에 해당하는 파드만 스케쥴링 하기 위한 목적으로 사용됩니다.  
+
+아래 예에서 normal-pod는 node1에 스케줄링되지 않고, tolerating-pod는 스케줄링이 될 수 있습니다.  
+테인트가 걸린 노드에 파드를 배포할 때는 'tolerations' 조건을 이용합니다.  
+```
+# 1. 노드에 테인트 설정
+kubectl taint nodes node1 app=blue:NoSchedule
+
+# 2. 톨러레이션이 없는 일반 파드
+apiVersion: v1
+kind: Pod
+metadata:
+  name: normal-pod
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+
+# 3. 톨러레이션이 있는 파드
+apiVersion: v1
+kind: Pod
+metadata:
+  name: tolerating-pod
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+  tolerations:
+  - key: "app"
+    operator: "Equal"
+    value: "blue"
+    effect: "NoSchedule"
+```
+
+| [Top](#목차) |
+
+---
+
+## k9s
+[k9s](https://k9scli.io/)는 쿠버네티스 클러스터 관리를 도와주는 편리한 툴입니다.   
+![](images/2025-02-16-23-09-57.png)  
+
+아래 글에서 설치와 사용법을 익히십시오.  
+https://happycloud-lee.tistory.com/237
+
+
+
