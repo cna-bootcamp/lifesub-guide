@@ -213,6 +213,13 @@ kubectl get svc
 ```
 
 ### manifest 실행
+
+기존 파드 삭제
+```
+kubectl delete -f lifesub/deployment/manifest/deployments/
+kubectl delete -f lifesub-web/deployment/manifest/deployments/
+```
+
 확인된 DB Service 이름으로 ConfigMap의 DB Host 수정 후 manifest 실행
 ```bash
 cd ~/workspace
