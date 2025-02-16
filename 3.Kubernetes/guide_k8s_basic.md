@@ -247,11 +247,11 @@ kubectl apply -f lifesub-web/deployment/manifest/services/
 
 ### 정상 배포 확인
 ```bash
-# Pod 상태 확인
-kubectl get pods -w
-
 # Service 상태 확인
 kubectl get svc
+
+# Pod 상태 확인
+kubectl get pods -w
 
 ```
 
