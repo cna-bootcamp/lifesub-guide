@@ -992,7 +992,7 @@ managed-premium         disk.csi.azure.com   Delete          WaitForFirstConsume
 퍼시스턴트 볼륨 오브젝트가 바인딩 됩니다.   
 만약 조건에 맞는 퍼시스턴트 볼륨 오브젝트가 한개 이상이면 무작위로 한개가 선정되어 바인딩 됩니다.   
   
-7)자동 볼륨 생성(Dynamic Provisioning)   
+**7)자동 볼륨 생성(Dynamic Provisioning)**     
 쿠버네티스는 퍼시스턴트 볼륨 클레임 오브젝트를 생성하면 자동으로 볼륨 디렉토리와 퍼시스턴트 볼륨 오브젝트를 생성하는 방법을 제공 합니다.  
 이렇게 자동으로 볼륨 디렉토리와 퍼시스턴트 볼륨 오브젝트를 생성하는 것을 **동적 프로비저닝(Dynamic provisioning)**이라고 합니다.    
   
