@@ -430,7 +430,7 @@ Service 리소스의 'type'은 3가지가 있습니다.
   - k8s 클러스터 내부에서 접근 주소: ClusterIP와 동일   
   - k8s 클러스터 외부에서 접근 주소: http://{k8s 노드 Public IP}:{Node Port}. k8s노드는 아무거나 상관없음   
   - NodePort는 spec.ports.nodePort로 고정 가능함  
-  - k8s 클러스터가 외부에 노출되지 않은 경우는 Bastion서버 IP를 사용하고 Bastion IP에 포트 Proxying헤야 함  
+  - k8s 클러스터가 외부에 노출되지 않은 경우는 Bastion서버 IP를 사용하고 Bastion IP에 포트 Proxying 해야 함  
 - LoadBalancer:  
   - k8s 클러스터 외부에서 접근할 수 있는 Public IP가 생성됨  
   - Major CSP(Cloud Service Provider)의 K8s솔루션(AKS, EKS, GKS등)에서만 지원됨  
@@ -471,7 +471,7 @@ Database는 자기가 CRUD해야할 데이터 저장소에 대한 정보를 갖�
 
 4)ImagePullPolicy: Always-로컬에 있어도 항상 레지스트리에서 다시 Pull함, IfNotPresent: 로컬에 없을때만 Pull함   
    
-5)imagePullSecrets: 이미지 레지스트의 인증 정보를 담고 있는 시크릿 객체 지정   
+5)imagePullSecrets: 이미지 레지스트리의 인증 정보를 담고 있는 시크릿 객체 지정   
    
 6)파드스케줄링 방법: 파드가 배포될 노드를 지정하는 방법입니다.   
 '어피니티'가 붙은 방법들은 좀 복잡합니다.  
@@ -558,6 +558,32 @@ livenessProbe:
 - successThreshold: 몇 번까지 성공 시 최종 성공으로 간주할 것인가 ?   
    
 9.3)terminationGracePeriodSeconds: 안전한 파드 종료를 위한 여유시간 지정(기본:30초)    
+
+9.4)Spring Boot Actuator 라이브러리를 이용한 헥스체크 엔드 포인트(/actuator/health[/liveness, readiness]) 생성   
+최상위 build.gralde에 'Actuator'라이브러리를 추가합니다.   
+```
+// Actuator 추가
+implementation 'org.springframework.boot:spring-boot-starter-actuator'
+```   
+각 서비스(member, mysub-infra, recommend)의 application.yml에 설정을 추가하여 End point를 생성합니다.   
+```
+# Actuator 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
+```
    
 직접 실습까지 해보고 싶으면 [헬스 체크를 위한 스타트업 프로브, 라이브니스 프로브, 레디니스 프로브](https://happycloud-lee.tistory.com/257)를 참조하세요.      
 
