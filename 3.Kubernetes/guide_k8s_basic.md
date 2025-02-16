@@ -306,12 +306,8 @@ Frontend Service의 External IP로 접속하여 서비스 동작 확인
 
 ```
 web_host=$(kubectl get svc lifesub-web -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
-echo "테스트 주소: http://lifesub-web.${web_host}.nip.io"
+echo "테스트 주소: http://${web_host}"
 ```
-
-예시)   
-http://lifesub-web.20.249.204.104.nip.io  
-
 
 | [Top](#목차) |
 
