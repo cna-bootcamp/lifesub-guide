@@ -208,10 +208,25 @@ mkdir -p lifesub/deployment/manifest/{configmaps,secrets,deployments,services}
 mkdir -p lifesub-web/deployment/manifest/{deployments,services}
 ```
 
-ALLOWED_ORIGINS값을 동적으로 변경하여 common-config.yaml 생성  
+ALLOWED_ORIGINS값에 lifesub-web의 service external ip를 반영한한 common-config.yaml 생성  
 ```
-# Ingress External IP 가져오기
-ingress_host=$(kubectl get svc ingress-nginx-controller -n ingress-basic -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+cd ~/workspace
+# lifesub-web service 생성
+kubectl apply -f lifesub-web/deployment/manifest/services/lifesub-web-service.yaml
+
+# lifesub-web의 External IP가 할당될 때까지 대기
+echo "Waiting for LoadBalancer IP..."
+while [ -z "$web_host" ]; do
+  web_host=$(kubectl get svc lifesub-web -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
+  if [ -z "$web_host" ]; then
+    echo -n "."
+    sleep 2
+  fi
+done
+echo "LoadBalancer IP: ${web_host}"
+
+# ConfigMap 파일 생성
+mkdir -p lifesub/deployment/manifest/configmaps
 
 cat > lifesub/deployment/manifest/configmaps/common-config.yaml << EOF
 apiVersion: v1
@@ -221,9 +236,24 @@ metadata:
 data:
   JPA_DDL_AUTO: update
   JPA_SHOW_SQL: "true"
-  ALLOWED_ORIGINS: "http://localhost:18080,http://localhost:18081,http://${ingress_host}"
+  ALLOWED_ORIGINS: "http://localhost:18080,http://localhost:18081,http://${web_host}"
 EOF
+
+# ConfigMap 적용
+kubectl apply -f lifesub/deployment/manifest/configmaps/common-config.yaml
+
+# 결과 확인
+echo -e "\nVerifying configuration:"
+echo "Web Service IP: ${web_host}"
+echo -n "ALLOWED_ORIGINS: "
+grep "ALLOWED_ORIGINS" lifesub/deployment/manifest/configmaps/common-config.yaml
 ```
+
+common-config.yaml이 잘 생성되었는지 확인  
+```
+cat "Ingress Host: 
+```
+
 ### Manifest 점검 및 실행
 DB Service 이름 확인:
 ```bash
