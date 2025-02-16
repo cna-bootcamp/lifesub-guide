@@ -5,6 +5,7 @@
 ## 목차
 - [Kubernetes 기초](#kubernetes-기초)
   - [목차](#목차)
+  - [ingress controller 추가](#ingress-controller-추가)
   - [서비스 배포하기](#서비스-배포하기)
     - [lifesub-ns의 리소스 삭제](#lifesub-ns의-리소스-삭제)
     - [네임스페이스 생성](#네임스페이스-생성)
@@ -15,6 +16,72 @@
     - [manifest 실행](#manifest-실행)
     - [정상 배포 확인](#정상-배포-확인)
     - [테스트](#테스트)
+
+## ingress controller 추가
+
+```
+controller:
+  replicaCount: 1
+  service:
+    annotations:
+      service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: /healthz
+    loadBalancerIP: ""
+    
+    #해당 포트가 어떤 애플리케이션 프로토콜을 사용하는지 명시적으로 지정하는 옵션 비활성화
+    #targetPort를 named port("http", "https")로 매핑하려고 시도해서 
+    #Ingress Nginx Controller pod의 container port는 숫자(80, 443)로 정의되어 있어서 매핑이 실패 
+    appProtocol: false  
+    
+  config:
+    use-forwarded-headers: "true"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+```
+helm upgrade -i ingress-nginx -f ingress-values.yaml -n ingress-basic ingress-nginx/ingress-nginx
+
+```
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: backend-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - path: /member(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: member
+            port:
+              number: 80
+      - path: /mysub(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: mysub
+            port:
+              number: 80
+      - path: /recommend(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: recommend
+            port:
+              number: 80
+
+```
 
 ## 서비스 배포하기
 
@@ -27,6 +94,10 @@ k delete cm --all -n lifesub-ns
 k delete secret --all -n lifesub-ns
 k delete ns lifesub-ns
 ```
+
+---
+
+
 
 ### 네임스페이스 생성
 ```bash
@@ -51,7 +122,7 @@ $ helm repo update
 ```
 cd ~/workspace/lifesub
 chmod +x deployment/database/deploy_db.sh
-./deployment/database/deploy_db.sh
+./deployment/database/deploy_db.sh dg0200-lifesub-ns
 ```
 
 ### Application 빌드
@@ -122,15 +193,35 @@ docker push dg0200cr.azurecr.io/lifesub/recommend:1.0.0
 ```
 
 Frontend Application 빌드:
+
+
+Ingress control IP를 구함
+```
+k get svc -n ingress-basic
+```
+
 ```bash
 # lifesub-web 디렉토리에서 수행
 cd ~/workspace/lifesub-web
 
 docker build \
   --build-arg PROJECT_FOLDER="." \
-  --build-arg REACT_APP_MEMBER_URL="http://member" \
-  --build-arg REACT_APP_MYSUB_URL="http://mysub" \
-  --build-arg REACT_APP_RECOMMEND_URL="http://recommend" \
+  --build-arg REACT_APP_MEMBER_URL="http://{Ingress host}/member" \
+  --build-arg REACT_APP_MYSUB_URL="http://{Ingress host}/mysub" \
+  --build-arg REACT_APP_RECOMMEND_URL="http://{Ingress host}/recommend" \
+  --build-arg BUILD_FOLDER="container" \
+  --build-arg EXPORT_PORT="18080" \
+  -f container/Dockerfile \
+  -t dg0200cr.azurecr.io/lifesub/lifesub-web:1.0.0 .
+```
+
+예시)
+```
+docker build \
+  --build-arg PROJECT_FOLDER="." \
+  --build-arg REACT_APP_MEMBER_URL="http://20.249.185.127/member" \
+  --build-arg REACT_APP_MYSUB_URL="http://20.249.185.127/mysub" \
+  --build-arg REACT_APP_RECOMMEND_URL="http://20.249.185.127/recommend" \
   --build-arg BUILD_FOLDER="container" \
   --build-arg EXPORT_PORT="18080" \
   -f container/Dockerfile \
@@ -160,6 +251,10 @@ kubectl get svc
 확인된 DB Service 이름으로 ConfigMap의 DB Host 수정 후 manifest 실행
 ```bash
 cd ~/workspace
+
+# Ingreess 생성
+kubectl apply -f lifesub/deployment/manifest/ingresses/
+
 # ConfigMap 생성
 kubectl apply -f lifesub/deployment/manifest/configmaps/
 
