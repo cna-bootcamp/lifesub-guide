@@ -43,7 +43,10 @@ controller:
       memory: 512Mi
 
 ```
+
+```
 helm upgrade -i ingress-nginx -f ingress-values.yaml -n ingress-basic ingress-nginx/ingress-nginx
+```
 
 ```
 apiVersion: networking.k8s.io/v1
