@@ -125,7 +125,7 @@ service=recommend
 이제 실행 Jar를 컨테이너 안으로 복사하여 컨테이너 이미지를 만듭니다.  
 
 이미지 빌드 매니페스트인 Dockerfile이 필요 하겠죠?  
-아래와 같이 표준화된 Dockerfile을 lifesub/container라는 디렉토리를 만들고   
+아래와 같이 표준화된 Dockerfile을 lifesub/deployment라는 디렉토리를 만들고   
 Dockerfile이라는 이름으로 만듭니다.  
 Build할 때와 실행할때의 이미지를 다른걸 사용한게 특이할겁니다.  
 이는 실행 컨테이너 이미지의 사이즈를 작게 하기 위해서입니다.  
@@ -178,7 +178,7 @@ docker build \
   --platform linux/amd64 \
   --build-arg BUILD_LIB_DIR="${service}/build/libs" \
   --build-arg ARTIFACTORY_FILE="${service}.jar" \
-  -f container/${DOCKER_FILE} \
+  -f deployment/${DOCKER_FILE} \
   -t ${service}:latest .
 
 service=mysub
@@ -186,7 +186,7 @@ docker build \
   --platform linux/amd64 \
   --build-arg BUILD_LIB_DIR="${service}-infra/build/libs" \
   --build-arg ARTIFACTORY_FILE="${service}.jar" \
-  -f container/${DOCKER_FILE} \
+  -f deployment/${DOCKER_FILE} \
   -t ${service}:latest .
 
 service=recommend
@@ -194,7 +194,7 @@ docker build \
   --platform linux/amd64 \
   --build-arg BUILD_LIB_DIR="${service}/build/libs" \
   --build-arg ARTIFACTORY_FILE="${service}.jar" \
-  -f container/${DOCKER_FILE} \
+  -f deployment/${DOCKER_FILE} \
   -t ${service}:latest .
 ```
 
@@ -215,7 +215,7 @@ docker images | grep member
 이제 프론트엔드 애플리케이션인 'lifesub-web'의 컨테이너 이미지를 만들겠습니다.   
 
 역시 Dockerfile부터 필요하겠죠.  
-lifesub-web/container디렉토리를 만들고 'Dockerfile-lifesub-web'을 아래 내용으로 만듭니다.   
+lifesub-web/deployment디렉토리를 만들고 'Dockerfile-lifesub-web'을 아래 내용으로 만듭니다.   
 backend의 주소를 담고 있는 '/usr/share/nginx/html/runtime-env.js' 파일을 동적으로 만드는 것에 주목 해 주세요.   
 public/index.html에서 이 js파일을 include하기 때문에 각 백엔드의 주소 환경변수가 생깁니다.   
 ```
@@ -290,7 +290,7 @@ Dockerfile에 보면 nginx의 설정 파일이 필요하다는 것을 알 수 �
 COPY ${BUILD_FOLDER}/nginx.conf /etc/nginx/templates/default.conf.template
 ```
 
-container 디렉토리 밑에 아래 내용으로 nginx.conf파일을 만듭니다.  
+deployment 디렉토리 밑에 아래 내용으로 nginx.conf파일을 만듭니다.  
 listen하는 포트가 18080으로 되어 있음을 잠깐 기억해 주세요.  
 ```
 server {
@@ -347,9 +347,9 @@ docker build \
   --build-arg REACT_APP_MEMBER_URL="http://{VM IP}:8081" \
   --build-arg REACT_APP_MYSUB_URL="http://{VM IP}:8082" \
   --build-arg REACT_APP_RECOMMEND_URL="http://{VM IP}:8083" \
-  --build-arg BUILD_FOLDER="container" \
+  --build-arg BUILD_FOLDER="deployment" \
   --build-arg EXPORT_PORT="18080" \
-  -f container/Dockerfile-lifesub-web \
+  -f deployment/Dockerfile-lifesub-web \
   -t lifesub-web:latest .
 ```
 
@@ -361,9 +361,9 @@ docker build \
   --build-arg REACT_APP_MEMBER_URL="http://20.39.207.118:8081" \
   --build-arg REACT_APP_MYSUB_URL="http://20.39.207.118:8082" \
   --build-arg REACT_APP_RECOMMEND_URL="http://20.39.207.118:8083" \
-  --build-arg BUILD_FOLDER="container" \
+  --build-arg BUILD_FOLDER="deployment" \
   --build-arg EXPORT_PORT="18080" \
-  -f container/Dockerfile-lifesub-web \
+  -f deployment/Dockerfile-lifesub-web \
   -t lifesub-web:latest .
 ```
 
@@ -390,9 +390,9 @@ docker build \
   --build-arg REACT_APP_MEMBER_URL="http://localhost:8081" \
   --build-arg REACT_APP_MYSUB_URL="http://localhost:8082" \
   --build-arg REACT_APP_RECOMMEND_URL="http://localhost:8083" \
-  --build-arg BUILD_FOLDER="container" \
+  --build-arg BUILD_FOLDER="deployment" \
   --build-arg EXPORT_PORT="18080" \
-  -f container/Dockerfile-lifesub-web \
+  -f deployment/Dockerfile-lifesub-web \
   -t lifesub-web-local:latest .
 ```
 
@@ -845,7 +845,7 @@ service=member
 docker build \
   --build-arg BUILD_LIB_DIR="${service}/build/libs" \
   --build-arg ARTIFACTORY_FILE="${service}.jar" \
-  -f container/${DOCKER_FILE} \
+  -f deployment/${DOCKER_FILE} \
   -t ${service}:latest .
 ```
 
@@ -938,7 +938,7 @@ services:
   member:
     build:
       context: ${WORKSPACE}/lifesub
-      dockerfile: container/Dockerfile
+      dockerfile: deployment/Dockerfile
       args:
         BUILD_LIB_DIR: "member/build/libs"
         ARTIFACTORY_FILE: "member.jar"
@@ -954,7 +954,7 @@ services:
   mysub:
     build:
       context: ${WORKSPACE}/lifesub
-      dockerfile: container/Dockerfile
+      dockerfile: deployment/Dockerfile
       args:
         BUILD_LIB_DIR: "mysub-infra/build/libs"
         ARTIFACTORY_FILE: "mysub.jar"
@@ -970,7 +970,7 @@ services:
   recommend:
     build:
       context: ${WORKSPACE}/lifesub
-      dockerfile: container/Dockerfile
+      dockerfile: deployment/Dockerfile
       args:
         BUILD_LIB_DIR: "recommend/build/libs"
         ARTIFACTORY_FILE: "recommend.jar"
@@ -987,13 +987,13 @@ services:
   lifesub-web:
     build:
       context: ${WORKSPACE}/lifesub-web
-      dockerfile: container/Dockerfile-lifesub-web
+      dockerfile: deployment/Dockerfile-lifesub-web
       args:
         PROJECT_FOLDER: "."
         REACT_APP_MEMBER_URL: "http://{VM IP}:8081"
         REACT_APP_MYSUB_URL: "http://{VM IP}:8082"
         REACT_APP_RECOMMEND_URL: "http://{VM IP}:8083"
-        BUILD_FOLDER: "container"
+        BUILD_FOLDER: "deployment"
         EXPORT_PORT: "18080"
     image: {ACR명}.azurecr.io/lifesub/lifesub-web:latest
     container_name: lifesub-web
@@ -1005,13 +1005,13 @@ services:
   lifesub-web-local:
     build:
       context: ${WORKSPACE}/lifesub-web
-      dockerfile: container/Dockerfile-lifesub-web
+      dockerfile: deployment/Dockerfile-lifesub-web
       args:
         PROJECT_FOLDER: "."
         REACT_APP_MEMBER_URL: "http://localhost:8081"
         REACT_APP_MYSUB_URL: "http://localhost:8082"
         REACT_APP_RECOMMEND_URL: "http://localhost:8083"
-        BUILD_FOLDER: "container"
+        BUILD_FOLDER: "deployment"
         EXPORT_PORT: "18080"
     image: lifesub-web-local:latest
     container_name: lifesub-web-local
@@ -1032,7 +1032,7 @@ services:
   member:
     build:
       context: ${WORKSPACE}/lifesub
-      dockerfile: container/Dockerfile
+      dockerfile: deployment/Dockerfile
       args:
         BUILD_LIB_DIR: "member/build/libs"
         ARTIFACTORY_FILE: "member.jar"
@@ -1048,7 +1048,7 @@ services:
   mysub:
     build:
       context: ${WORKSPACE}/lifesub
-      dockerfile: container/Dockerfile
+      dockerfile: deployment/Dockerfile
       args:
         BUILD_LIB_DIR: "mysub-infra/build/libs"
         ARTIFACTORY_FILE: "mysub.jar"
@@ -1064,7 +1064,7 @@ services:
   recommend:
     build:
       context: ${WORKSPACE}/lifesub
-      dockerfile: container/Dockerfile
+      dockerfile: deployment/Dockerfile
       args:
         BUILD_LIB_DIR: "recommend/build/libs"
         ARTIFACTORY_FILE: "recommend.jar"
@@ -1081,13 +1081,13 @@ services:
   lifesub-web:
     build:
       context: ${WORKSPACE}/lifesub-web
-      dockerfile: container/Dockerfile-lifesub-web
+      dockerfile: deployment/Dockerfile-lifesub-web
       args:
         PROJECT_FOLDER: "."
         REACT_APP_MEMBER_URL: "http://20.39.207.118:8081"
         REACT_APP_MYSUB_URL: "http://20.39.207.118:8082"
         REACT_APP_RECOMMEND_URL: "http://20.39.207.118:8083"
-        BUILD_FOLDER: "container"
+        BUILD_FOLDER: "deployment"
         EXPORT_PORT: "18080"
     image: dg0200cr.azurecr.io/lifesub/lifesub-web:latest
     container_name: lifesub-web
@@ -1099,13 +1099,13 @@ services:
   lifesub-web-local:
     build:
       context: ${WORKSPACE}/lifesub-web
-      dockerfile: container/Dockerfile-lifesub-web
+      dockerfile: deployment/Dockerfile-lifesub-web
       args:
         PROJECT_FOLDER: "."
         REACT_APP_MEMBER_URL: "http://localhost:8081"
         REACT_APP_MYSUB_URL: "http://localhost:8082"
         REACT_APP_RECOMMEND_URL: "http://localhost:8083"
-        BUILD_FOLDER: "container"
+        BUILD_FOLDER: "deployment"
         EXPORT_PORT: "18081"
     image: lifesub-web-local:latest
     container_name: lifesub-web-local

@@ -221,21 +221,21 @@ cd ~/workspace/lifesub
 docker build \
   --build-arg BUILD_LIB_DIR="member/build/libs" \
   --build-arg ARTIFACTORY_FILE="member.jar" \
-  -f container/Dockerfile \
+  -f deployment/Dockerfile \
   -t ${ID}cr.azurecr.io/lifesub/member:1.0.0 .
 
 # mysub 서비스
 docker build \
   --build-arg BUILD_LIB_DIR="mysub-infra/build/libs" \
   --build-arg ARTIFACTORY_FILE="mysub.jar" \
-  -f container/Dockerfile \
+  -f deployment/Dockerfile \
   -t ${ID}cr.azurecr.io/lifesub/mysub:1.0.0 .
 
 # recommend 서비스
 docker build \
   --build-arg BUILD_LIB_DIR="recommend/build/libs" \
   --build-arg ARTIFACTORY_FILE="recommend.jar" \
-  -f container/Dockerfile \
+  -f deployment/Dockerfile \
   -t ${ID}cr.azurecr.io/lifesub/recommend:1.0.0 .
 ```
 
@@ -272,9 +272,9 @@ docker build \
   --build-arg REACT_APP_MEMBER_URL="http://${ingress_host}/member" \
   --build-arg REACT_APP_MYSUB_URL="http://${ingress_host}/mysub" \
   --build-arg REACT_APP_RECOMMEND_URL="http://${ingress_host}/recommend" \
-  --build-arg BUILD_FOLDER="container" \
+  --build-arg BUILD_FOLDER="deployment" \
   --build-arg EXPORT_PORT="18080" \
-  -f container/Dockerfile \
+  -f deployment/Dockerfile \
   -t ${ID}cr.azurecr.io/lifesub/lifesub-web:1.0.0 .
 ```
 
