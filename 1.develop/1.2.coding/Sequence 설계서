@@ -1,0 +1,308 @@
+!theme mono
+title 구독관리 서비스 - 외부 시퀀스 다이어그램
+
+actor Client
+participant "회원 서비스" as MemberService
+participant "마이구독 서비스" as MySubService
+participant "구독추천 서비스" as RecommendService
+
+' 회원 서비스 호출
+Client -> MemberService: POST /api/auth/login\n[로그인]
+Client -> MemberService: POST /api/auth/logout\n[로그아웃]
+
+' 마이구독 서비스 호출
+Client -> MySubService: GET /api/mysub/total-fee\n[총 구독료 조회]
+Client -> MySubService: GET /api/mysub/list\n[나의 구독 목록 조회]
+Client -> MySubService: GET /api/mysub/{subscriptionId}\n[구독 상세 조회]
+Client -> MySubService: POST /api/mysub/{subscriptionId}/subscribe\n[구독 신청]
+Client -> MySubService: DELETE /api/mysub/{subscriptionId}\n[구독 취소]
+Client -> MySubService: GET /api/mysub/categories\n[전체 카테고리 목록 조회]
+Client -> MySubService: GET /api/mysub/services\n[카테고리별 서비스 목록 조회]
+
+' 구독추천 서비스 호출
+Client -> RecommendService: GET /api/recommend/categories\n[지출 기반 추천 카테고리 조회]
+
+note right of MemberService
+  인증/인가 처리
+  - 로그인: 사용자 인증
+  - 로그아웃: 세션 종료
+end note
+
+note right of RecommendService
+  구독추천 서비스는 사용자의 
+  지출 패턴을 분석하여
+  최적의 구독 카테고리 추천
+  - 지출 데이터 분석
+  - 카테고리 기반 추천
+end note
+
+--
+
+!theme mono
+title 회원 서비스 - 내부 시퀀스 다이어그램
+
+actor Client
+participant "회원 컨트롤러\n(MemberController)" as Controller
+participant "회원 서비스\n(MemberService)" as Service
+participant "JWT 토큰 제공자\n(JwtTokenProvider)" as TokenProvider
+participant "비밀번호 인코더\n(PasswordEncoder)" as PwEncoder
+database "회원 DB" as DB
+
+' 로그인 flow
+Client -> Controller: POST /api/auth/login\n[로그인]
+activate Controller
+
+Controller -> Service: login(LoginRequest)
+activate Service
+
+Service -> DB: findByUserId(userId)
+activate DB
+DB --> Service: Member
+deactivate DB
+
+Service -> PwEncoder: matches(rawPassword, encodedPassword)
+activate PwEncoder
+PwEncoder --> Service: matched result
+deactivate PwEncoder
+
+alt 인증 성공
+    Service -> TokenProvider: createToken(member)
+    activate TokenProvider
+    TokenProvider --> Service: access/refresh tokens
+    deactivate TokenProvider
+    
+    Service --> Controller: TokenResponse
+else 인증 실패
+    Service --> Controller: throw InvalidCredentialsException
+end
+
+Controller --> Client: HTTP Response\n(tokens or error)
+deactivate Service
+deactivate Controller
+
+' 로그아웃 flow
+Client -> Controller: POST /api/auth/logout\n[로그아웃]
+activate Controller
+
+Controller -> Service: logout(LogoutRequest)
+activate Service
+
+Service -> TokenProvider: invalidateToken(accessToken)
+activate TokenProvider
+TokenProvider --> Service: invalidation result
+deactivate TokenProvider
+
+Service --> Controller: LogoutResponse
+Controller --> Client: HTTP Response\n(success message)
+
+deactivate Service
+deactivate Controller
+
+note right of Controller
+  1. 요청 유효성 검증
+  2. 서비스 계층 호출
+  3. 응답 변환 및 반환
+end note
+
+note right of Service
+  1. 비즈니스 로직 처리
+  2. 사용자 인증
+  3. 토큰 관리
+end note
+
+note right of TokenProvider
+  1. JWT 토큰 생성
+  2. 토큰 검증
+  3. 토큰 무효화
+end note
+
+note right of DB
+  1. 회원 정보 저장
+  2. 회원 정보 조회
+end note
+
+---
+
+!theme mono
+title 마이구독 서비스 - 내부 시퀀스 다이어그램
+
+actor Client
+participant "마이구독 컨트롤러\n(MySubController)" as Controller
+participant "마이구독 서비스\n(MySubService)" as Service
+database "마이구독 DB" as MySubDB
+database "구독서비스 DB" as SubServiceDB
+
+' 총 구독료 조회
+Client -> Controller: GET /api/mysub/total-fee\n[총 구독료 조회]
+activate Controller
+Controller -> Service: getTotalFee(userId)
+activate Service
+Service -> MySubDB: findMySubscriptions(userId)
+MySubDB --> Service: List<MySubscription>
+Service -> SubServiceDB: findSubscriptionsByIds(subIds)
+SubServiceDB --> Service: List<Subscription>
+Service --> Controller: TotalFeeResponse
+Controller --> Client: HTTP Response\n(total fee)
+deactivate Service
+deactivate Controller
+
+' 나의 구독 목록 조회
+Client -> Controller: GET /api/mysub/list\n[나의 구독 목록 조회]
+activate Controller
+Controller -> Service: getMySubscriptions(userId)
+activate Service
+Service -> MySubDB: findMySubscriptions(userId)
+MySubDB --> Service: List<MySubscription>
+Service -> SubServiceDB: findSubscriptionsByIds(subIds)
+SubServiceDB --> Service: List<Subscription>
+Service --> Controller: List<MySubListResponse>
+Controller --> Client: HTTP Response\n(subscription list)
+deactivate Service
+deactivate Controller
+
+' 구독 상세 조회
+Client -> Controller: GET /api/mysub/{subscriptionId}\n[구독 상세 조회]
+activate Controller
+Controller -> Service: getSubscriptionDetail(subscriptionId)
+activate Service
+Service -> SubServiceDB: findById(subscriptionId)
+SubServiceDB --> Service: Subscription
+Service --> Controller: SubDetailResponse
+Controller --> Client: HTTP Response\n(subscription detail)
+deactivate Service
+deactivate Controller
+
+' 구독 신청
+Client -> Controller: POST /api/mysub/{subscriptionId}/subscribe\n[구독 신청]
+activate Controller
+Controller -> Service: subscribe(subscriptionId, userId)
+activate Service
+Service -> SubServiceDB: findById(subscriptionId)
+SubServiceDB --> Service: Subscription
+Service -> MySubDB: save(mySubscription)
+MySubDB --> Service: MySubscription
+Service --> Controller: SubscribeResponse
+Controller --> Client: HTTP Response\n(success message)
+deactivate Service
+deactivate Controller
+
+' 구독 취소
+Client -> Controller: DELETE /api/mysub/{subscriptionId}\n[구독 취소]
+activate Controller
+Controller -> Service: cancelSubscription(subscriptionId)
+activate Service
+Service -> MySubDB: deleteById(subscriptionId)
+MySubDB --> Service: void
+Service --> Controller: void
+Controller --> Client: HTTP Response\n(success)
+deactivate Service
+deactivate Controller
+
+' 전체 카테고리 목록 조회
+Client -> Controller: GET /api/mysub/categories\n[전체 카테고리 목록 조회]
+activate Controller
+Controller -> Service: getAllCategories()
+activate Service
+Service -> SubServiceDB: findAllCategories()
+SubServiceDB --> Service: List<Category>
+Service --> Controller: List<CategoryResponse>
+Controller --> Client: HTTP Response\n(category list)
+deactivate Service
+deactivate Controller
+
+' 카테고리별 서비스 목록 조회
+Client -> Controller: GET /api/mysub/services\n[카테고리별 서비스 목록 조회]
+activate Controller
+Controller -> Service: getServicesByCategory(categoryId)
+activate Service
+Service -> SubServiceDB: findByCategory(categoryId)
+SubServiceDB --> Service: List<Subscription>
+Service --> Controller: List<ServiceListResponse>
+Controller --> Client: HTTP Response\n(service list)
+deactivate Service
+deactivate Controller
+
+note right of Controller
+  1. API 요청 처리
+  2. 요청 유효성 검증
+  3. 응답 변환 및 반환
+end note
+
+note right of Service
+  1. 비즈니스 로직 처리
+  2. 구독 관리
+end note
+
+note right of MySubDB
+  사용자별 구독 정보 관리
+  - 구독 정보 저장
+  - 구독 상태 관리
+end note
+
+note right of SubServiceDB
+  구독 서비스 정보 관리
+  - 서비스 정보
+  - 카테고리 정보
+end note
+
+---
+
+!theme mono
+title 구독추천 서비스 - 내부 시퀀스 다이어그램
+
+actor Client
+participant "추천 컨트롤러\n(RecommendController)" as Controller
+participant "추천 서비스\n(RecommendService)" as Service
+participant "지출분석 서비스\n(ExpenseAnalyzer)" as Analyzer
+database "구독추천 DB" as RecommendDB
+
+' 지출 기반 추천 카테고리 조회
+Client -> Controller: GET /api/recommend/categories\n[지출 기반 추천 카테고리 조회]
+activate Controller
+
+Controller -> Service: getRecommendCategories(userId)
+activate Service
+
+' 사용자 지출 패턴 분석
+Service -> Analyzer: analyzeExpensePattern(userId)
+activate Analyzer
+Analyzer -> RecommendDB: findExpensesByUserId(userId)
+RecommendDB --> Analyzer: List<UserExpense>
+Analyzer -> Analyzer: calculateTopSpendingCategory()
+Analyzer --> Service: TopSpendingCategory
+deactivate Analyzer
+
+' 추천 카테고리 매핑
+Service -> RecommendDB: findRecommendCategoryBySpendingCategory(topSpendingCategory)
+RecommendDB --> Service: RecommendCategory
+
+' 추천 결과 반환
+Service --> Controller: RecommendResponse
+Controller --> Client: HTTP Response\n(recommendCategory, topSpendCategory)
+
+deactivate Service
+deactivate Controller
+
+note right of Controller
+  1. 요청 파라미터 검증
+  2. 서비스 계층 호출
+  3. 응답 변환
+end note
+
+note right of Service
+  1. 지출 패턴 분석 요청
+  2. 추천 카테고리 매핑
+  3. 추천 결과 생성
+end note
+
+note right of Analyzer
+  1. 사용자별 지출 데이터 분석
+  2. 최고 지출 카테고리 산출
+  3. 지출 패턴 분석 알고리즘 적용
+end note
+
+note right of RecommendDB
+  1. 사용자 지출 데이터 저장
+  2. 카테고리 매핑 정보 관리
+  3. 추천 이력 관리
+end note

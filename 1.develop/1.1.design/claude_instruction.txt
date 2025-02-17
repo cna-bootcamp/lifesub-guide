@@ -259,7 +259,7 @@ Response DTO 구조
 - 각 클래스 소스 상단에 전체 경로를 '//'뒤에 표시   
 
 <참고자료>
-- 03.sample_Userstory.pdf
+- Userstory.pdf
 - API 설계서
 - Sequence Diagram
 - Clas 설계서

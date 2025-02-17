@@ -1,0 +1,56 @@
+서비스명|회원|회원
+마이크로서비스 이름|Member|Member
+유저스토리 ID|USR-005|USR-015
+유저스토리 제목|로그인|로그아웃
+Controller 이름|MemberController|MemberController
+API 목적|사용자 로그인|로그아웃
+API Method|POST|POST
+API 그룹 Path|/api/auth|/api/auth
+API Path|/login|/logout
+Path <변수유형> <변수명>||
+Query Key||
+Query <변수유형> <변수명>||
+Request DTO 이름|LoginRequest|LogoutRequest
+Request DTO 배열 여부|No|No
+Request DTO 구조|String userId; String password|String userId
+Response DTO 이름|TokenResponse|LogoutResponse
+Response DTO 배열 여부|No|No
+Response DTO 구조|String accessToken; String refreshToken|String message
+
+서비스명|마이구독|마이구독|마이구독|마이구독|마이구독|마이구독|마이구독
+마이크로서비스 이름|MySubscription|MySubscription|MySubscription|MySubscription|MySubscription|MySubscription|MySubscription
+유저스토리 ID|MSS-005|MSS-010|MSS-020|MSS-025|MSS-030|MSS-035|MSS-040
+유저스토리 제목|총 구독료 표시|나의 구독 목록|구독상세|구독하기|구독취소|구독 카테고리 표시|구독서비스 목록
+Controller 이름|MySubController|MySubController|MySubController|MySubController|MySubController|CategoryController|ServiceController
+API 목적|총 구독료 조회|구독 목록 조회|구독 상세 조회|구독 신청|구독 취소|전체 카테고리 목록 조회|카테고리별 서비스 목록 조회
+API Method|GET|GET|GET|POST|DELETE|GET|GET
+API 그룹 Path|/api/mysub|/api/mysub|/api/mysub|/api/mysub|/api/mysub|/api/mysub|/api/mysub
+API Path|/total-fee|/list|/{subscriptionId}|/{subscriptionId}/subscribe|/{subscriptionId}|/categories|/services
+Path <변수유형> <변수명>|||Long subscriptionId|Long subscriptionId|Long subscriptionId||
+Query Key|userId|userId||||categoryId|categoryId
+Query <변수유형> <변수명>|String userId|String userId||||String categoryId|String categoryId
+Request DTO 이름||||SubscribeRequest|||
+Request DTO 배열 여부||||No|||
+Request DTO 구조||||String userId|||
+Response DTO 이름|TotalFeeResponse|MySubListResponse|SubDetailResponse|SubscribeResponse||CategoryResponse|ServiceListResponse
+Response DTO 배열 여부|No|Yes|No|No||Yes|Yes
+Response DTO 구조|Long totalFee; String feeLevel|String serviceName; String logoUrl|String serviceName; String logoUrl; String category; String description; int price; int maxSharedUsers|String message||String categoryId; String categoryName|String serviceId; String serviceName; String description; int price; String logoUrl
+
+서비스명|구독추천
+마이크로서비스 이름|SubRecommend
+유저스토리 ID|RSS-005
+유저스토리 제목|추천 구독 카테고리
+Controller 이름|RecommendController
+API 목적|지출 기반 추천 카테고리 조회
+API Method|GET
+API 그룹 Path|/api/recommend
+API Path|/categories
+Path <변수유형> <변수명>|
+Query Key|userId
+Query <변수유형> <변수명>|String userId
+Request DTO 이름|
+Request DTO 배열 여부|
+Request DTO 구조|
+Response DTO 이름|RecommendResponse
+Response DTO 배열 여부|No
+Response DTO 구조|String topSpendCategory; String recommendCategory

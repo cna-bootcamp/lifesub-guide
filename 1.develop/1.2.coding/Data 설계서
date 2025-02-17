@@ -1,0 +1,85 @@
+!theme mono
+title Member Service - 데이터 모델
+
+' Style configurations
+skinparam linetype ortho
+hide circle
+
+entity "Members" as members {
+  * userId: varchar(50) <<PK>>
+  --
+  userName: varchar(100)
+  password: varchar(255)
+  roles: varchar(255)
+  createdAt: timestamp
+  updatedAt: timestamp
+}
+
+note right of members
+  roles는 ARRAY 또는 JSON 타입으로 
+  ['USER', 'ADMIN'] 형태로 저장
+end note
+
+---
+
+!theme mono
+title MySubscription Service - 데이터 모델
+
+' Style configurations
+skinparam linetype ortho
+hide circle
+
+entity "My_Subscriptions" as my_subs {
+  * id: bigint <<PK>>
+  --
+  userId: varchar(50)
+  subId: bigint
+  createdAt: timestamp
+  updatedAt: timestamp
+}
+
+entity "Subscriptions" as subs {
+  * id: bigint <<PK>>
+  --
+  name: varchar(100)
+  description: text
+  category: varchar(50)
+  price: decimal(15,2)
+  maxSharedUsers: integer
+  logoUrl: varchar(255)
+  createdAt: timestamp
+  updatedAt: timestamp
+}
+
+' Relationships
+my_subs }o--|| subs : subId
+
+---
+
+!theme mono
+title Recommendation Service - 데이터 모델
+
+' Style configurations
+skinparam linetype ortho
+hide circle
+
+entity "Spending_History" as spending {
+  * id: bigint <<PK>>
+  --
+  userId: varchar(50)
+  category: varchar(50)
+  amount: decimal(15,2)
+  spendingDate: date
+  createdAt: timestamp
+}
+
+entity "Recommended_Categories" as recommend {
+  * id: bigint <<PK>>
+  --
+  spendingCategory: varchar(50)
+  recommendCategory: varchar(50)
+  createdAt: timestamp
+}
+
+' Relationships
+spending }o--o{ recommend : category-spendingCategory

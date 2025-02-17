@@ -1,0 +1,72 @@
+!theme mono
+
+title 구독관리 서비스 - 논리 아키텍처
+
+' Style
+skinparam componentStyle rectangle
+
+' Components
+package "클라이언트 계층" {
+    [모바일/웹 앱] as App
+}
+
+package "회원 서비스" {
+    [회원 컨트롤러] as MemberController
+    [회원 서비스] as MemberService
+    database "회원 DB" as MemberDB
+    
+    note right of MemberService
+        1. 로그인/로그아웃 처리
+        2. 회원 정보 관리
+    end note
+}
+
+package "마이구독 서비스" {
+    [마이구독 컨트롤러] as MySubController
+    [마이구독 서비스] as MySubService
+    database "마이구독 DB" as MySubDB {
+        [사용자별 구독 정보]
+    }
+    database "구독서비스 DB" as SubServiceDB {
+        [구독 서비스 정보]
+        [카테고리 정보]
+    }
+    
+    note right of MySubService
+        4. 총 구독료 계산
+        5. 나의 구독 목록 관리
+        8. 구독 상세 정보 제공
+        9. 구독 신청 처리
+        10. 구독 취소 처리
+        11. 구독 카테고리 관리
+        12. 카테고리별 구독 서비스 제공
+    end note
+}
+
+package "구독추천 서비스" {
+    [구독추천 컨트롤러] as RecommendController
+    [구독추천 서비스] as RecommendService
+    database "구독추천 DB" as RecommendDB
+    
+    note right of RecommendService
+        6. 지출 카테고리 기반 구독 추천
+        - 사용자의 지출 패턴 분석
+        - 최적 구독 카테고리 추천
+    end note
+}
+
+' Relationships
+App --> MemberController
+App --> MySubController
+App --> RecommendController
+
+MemberController --> MemberService
+MemberService --> MemberDB
+
+MySubController --> MySubService
+MySubService --> MySubDB
+MySubService --> SubServiceDB
+MySubService --> RecommendService : 추천 카테고리 조회
+
+RecommendController --> RecommendService
+RecommendService --> RecommendDB

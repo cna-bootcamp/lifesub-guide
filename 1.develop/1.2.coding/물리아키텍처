@@ -1,0 +1,63 @@
+!theme mono
+
+title 생활구독서비스 - 물리 아키텍처
+
+' Azure Resource Group
+rectangle "Resource Group" {
+    ' Virtual Network
+    rectangle "Virtual Network" {
+        ' AKS Cluster
+        rectangle "AKS Cluster" {
+            rectangle "Member Service" {
+                [회원 컨트롤러] as member_controller
+                [회원 서비스] as member_service
+            }
+            
+            rectangle "MySubscription Service" {
+                [마이구독 컨트롤러] as mysub_controller
+                [마이구독 서비스] as mysub_service
+            }
+            
+            rectangle "Recommendation Service" {
+                [구독추천 컨트롤러] as recommend_controller
+                [구독추천 서비스] as recommend_service
+            }
+        }
+
+    }
+    
+    ' Databases
+    database "Member DB\n(PostgreSQL)" as member_db {
+        [Members] as members_table
+    }
+    
+    database "MySubscription DB\n(PostgreSQL)" as mysub_db {
+        [My_Subscriptions] as mysub_table
+        [Subscriptions] as sub_table
+        note right of mysub_table
+            사용자별 구독 정보와
+            구독 서비스 정보 관리
+        end note
+    }
+    
+    database "Recommendation DB\n(PostgreSQL)" as recommend_db {
+        [Spending_History] as spending_table
+        [Recommended_Categories] as recommend_table
+        note right of recommend_table
+            지출 이력과
+            추천 카테고리 관리
+        end note
+    }
+}
+
+' External Actor
+actor "Client" as client
+
+' Connections
+client --> member_controller
+client --> mysub_controller
+client --> recommend_controller
+
+member_service --> member_db
+mysub_service --> mysub_db
+recommend_service --> recommend_db
