@@ -261,8 +261,8 @@ Response DTO 구조
 <참고자료>
 - Userstory.pdf
 - API 설계서
-- Sequence Diagram
-- Clas 설계서
+- Sequence 설계서
+- Class 설계서
 - 패키지 구조도 
 - Data 설계서 
 - 개발주석표준
