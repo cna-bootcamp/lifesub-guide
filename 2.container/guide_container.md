@@ -215,7 +215,7 @@ docker images | grep member
 이제 프론트엔드 애플리케이션인 'lifesub-web'의 컨테이너 이미지를 만들겠습니다.   
 
 역시 Dockerfile부터 필요하겠죠.  
-lifesub-web/container디렉토리를 만들고 'Dockerfile'을 아래 내용으로 만듭니다.   
+lifesub-web/container디렉토리를 만들고 'Dockerfile-lifesub-web'을 아래 내용으로 만듭니다.   
 backend의 주소를 담고 있는 '/usr/share/nginx/html/runtime-env.js' 파일을 동적으로 만드는 것에 주목 해 주세요.   
 public/index.html에서 이 js파일을 include하기 때문에 각 백엔드의 주소 환경변수가 생깁니다.   
 ```
@@ -324,7 +324,7 @@ server {
 }
 ```
 
-이제 이 Docker파일로 이미지를 만들겠습니다.   
+이제 이 이미지 작성 manifest파일로 이미지를 만들겠습니다.   
 
 먼저 라이브러리를 최신본으로 한번 더 설치합니다.   
 Dockerfile에서 'npm install'이 아니라 'npm ci'로 라이브러리를 설치하는데  
@@ -349,7 +349,7 @@ docker build \
   --build-arg REACT_APP_RECOMMEND_URL="http://{VM IP}:8083" \
   --build-arg BUILD_FOLDER="container" \
   --build-arg EXPORT_PORT="18080" \
-  -f container/Dockerfile \
+  -f container/Dockerfile-lifesub-web \
   -t lifesub-web:latest .
 ```
 
@@ -363,7 +363,7 @@ docker build \
   --build-arg REACT_APP_RECOMMEND_URL="http://20.39.207.118:8083" \
   --build-arg BUILD_FOLDER="container" \
   --build-arg EXPORT_PORT="18080" \
-  -f container/Dockerfile \
+  -f container/Dockerfile-lifesub-web \
   -t lifesub-web:latest .
 ```
 
@@ -392,7 +392,7 @@ docker build \
   --build-arg REACT_APP_RECOMMEND_URL="http://localhost:8083" \
   --build-arg BUILD_FOLDER="container" \
   --build-arg EXPORT_PORT="18080" \
-  -f container/Dockerfile \
+  -f container/Dockerfile-lifesub-web \
   -t lifesub-web-local:latest .
 ```
 
@@ -987,7 +987,7 @@ services:
   lifesub-web:
     build:
       context: ${WORKSPACE}/lifesub-web
-      dockerfile: container/Dockerfile
+      dockerfile: container/Dockerfile-lifesub-web
       args:
         PROJECT_FOLDER: "."
         REACT_APP_MEMBER_URL: "http://{VM IP}:8081"
@@ -1005,7 +1005,7 @@ services:
   lifesub-web-local:
     build:
       context: ${WORKSPACE}/lifesub-web
-      dockerfile: container/Dockerfile
+      dockerfile: container/Dockerfile-lifesub-web
       args:
         PROJECT_FOLDER: "."
         REACT_APP_MEMBER_URL: "http://localhost:8081"
@@ -1081,7 +1081,7 @@ services:
   lifesub-web:
     build:
       context: ${WORKSPACE}/lifesub-web
-      dockerfile: container/Dockerfile
+      dockerfile: container/Dockerfile-lifesub-web
       args:
         PROJECT_FOLDER: "."
         REACT_APP_MEMBER_URL: "http://20.39.207.118:8081"
@@ -1099,7 +1099,7 @@ services:
   lifesub-web-local:
     build:
       context: ${WORKSPACE}/lifesub-web
-      dockerfile: container/Dockerfile
+      dockerfile: container/Dockerfile-lifesub-web
       args:
         PROJECT_FOLDER: "."
         REACT_APP_MEMBER_URL: "http://localhost:8081"
