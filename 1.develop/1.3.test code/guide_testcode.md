@@ -41,7 +41,8 @@ https://github.com/cna-bootcamp/lifesub.git
   ```
   tu: {service}에 대한 단위 테스트 코드를 작성해 주세요.
   ```
-  예시)  
+  
+  예시)       
   ```
   tu: {member}에 대한 단위 테스트 코드를 작성해 주세요.
   ```  
@@ -52,7 +53,7 @@ https://github.com/cna-bootcamp/lifesub.git
   ```
 - 테스트 코드 작성  
   결과 코드를 복사하여 테스트 코드를 작성합니다.  
-  예시)
+  예시)    
   ![](images/2025-02-15-00-59-57.png)  
 
 - 테스트 코드 개선/완성  
@@ -73,6 +74,7 @@ https://github.com/cna-bootcamp/lifesub.git
   ```
   tu: {service}에 대한 통합 테스트 코드를 작성해 주세요.
   ```
+  
   예시)  
   ```
   tu: {member}에 대한 통합 테스트 코드를 작성해 주세요.
@@ -84,7 +86,7 @@ https://github.com/cna-bootcamp/lifesub.git
   ```
 - 테스트 코드 작성  
   결과 코드를 복사하여 테스트 코드를 작성합니다.  
-  
+    
 - 테스트 코드 개선/완성  
   컴파일 에러가 나는 클래스가 있으면 클로딩하여 개선/완성 합니다.  
 
