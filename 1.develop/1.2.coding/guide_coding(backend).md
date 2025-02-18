@@ -460,7 +460,14 @@ Pod가 모두 실행될때까지 기다립니다.
 k get po
 ```
 
+
 Service중 'external'로 끝나는 객체의 'EXTERNAL-IP'를 확인합니다.
+```
+k get svc
+```
+
+![](images/2025-02-19-08-58-42.png)  
+
 
 DBeaver를 실행하여 각 DB가 연결되는지 확인 합니다.
 ![](images/2025-02-12-21-22-01.png)
