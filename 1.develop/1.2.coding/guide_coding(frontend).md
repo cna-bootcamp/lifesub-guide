@@ -63,6 +63,16 @@
 > Successfully created lifesub-web_merged.txt
 > ```
 
+
+> Tip: 예제 코드  
+>   
+> 시간이 없거나 에러가 잘 안 잡히면 아래 소스를 이용하여 실습을 하십시오.  
+> 예제 소스는 아래와 같이 다운로드 할 수 있습니다.   
+> ```
+> cd ~/workspace  
+> git clone https://github.com/cna-bootcamp/lifesub-web.git  
+> ```
+
 | [Top](#목차) |
 
 ---
