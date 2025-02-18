@@ -77,13 +77,12 @@
   ![](images/2025-02-12-20-26-50.png)  
   
 > Tip: 예제 코드  
-> 실습을 위한 코드 예제는 아래 GitHub Repository에 있습니다.     
-> https://github.com/cna-bootcamp/lifesub-guide.git  
-> 시간이 없거나 에러가 잘 안 잡히면 위 소스를 이용하여 실습을 하십시오.  
+>   
+> 시간이 없거나 에러가 잘 안 잡히면 아래 소스를 이용하여 실습을 하십시오.  
 > 예제 소스는 아래와 같이 다운로드 할 수 있습니다.   
 > ```
 > cd ~/workspace  
-> git clone https://github.com/cna-bootcamp/lifesub-guide.git  
+> git clone https://github.com/cna-bootcamp/lifesub.git  
 > ```
 
 
