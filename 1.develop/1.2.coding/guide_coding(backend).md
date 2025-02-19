@@ -366,7 +366,18 @@ spring:
 - mysub 서비스: mysub
 - recommend 서비스: recommend
 
-아래 내용으로 'deploy-db.sh'라는 파일을 만듭니다.
+아래 내용으로 'deploy-db.sh'라는 파일을 만듭니다.   
+shell은 꼭 vi 를 이용하여 만들어 주세요.  
+
+```
+mkdir -p ~/work && cd ~/work
+vi deploy-db.sh
+``` 
+  
+'i'눌러 편집모드로 변경한 후 아래 소스를 우측 마우스를 눌러 붙여넣기 합니다.  
+ESC 누르고 ':'을 눌러 명령모드로 바꿉니다.   
+wq를 입력하고 저장 후 닫습니다.  
+
 ```
 #!/bin/bash
 
