@@ -24,6 +24,11 @@
 ## VM 생성
 컨테이너를 실행할 VM을 생성합니다.  
 
+Azure 로그인을 합니다.   
+```
+az login --use-device-code 
+```
+
 1.[VM 생성](https://github.com/cna-bootcamp/handson-azure/blob/main/prepare/setup-server.md#bastion-vm-%EC%83%9D%EC%84%B1)  
 
 2.[Docker 설치](https://github.com/cna-bootcamp/handson-azure/blob/main/prepare/setup-server.md#docker%EC%84%A4%EC%B9%98)  
@@ -540,8 +545,9 @@ docker push dg0200cr.azurecr.io/lifesub/lifesub-web:latest
 ##  컨테이너 실행
 컨테이너를 실행할 VM을 SSH세션을 눌러 접속합니다.     
 아직 안 만들었으면 아래 링크를 참조하여 만듭니다.  
-https://github.com/cna-bootcamp/handson-azure/blob/main/prepare/setup-server.md#mobaxterm-%EC%84%B8%EC%85%98-%EC%9E%91%EC%84%B1  
-
+https://github.com/cna-bootcamp/handson-azure/blob/main/prepare/setup-server.md#mobaxterm-%EC%84%B8%EC%85%98-%EC%9E%91%EC%84%B1
+  
+생성된 MobaXTerm 세션을 더블 클릭하여 VM에 로그인 합니다.  
 
 이미지를 다운로드 해야 하기 때문에 ACR에 로그인부터 합니다.   
 ```
