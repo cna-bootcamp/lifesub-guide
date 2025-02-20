@@ -660,7 +660,7 @@ livenessProbe:
   periodSeconds: 15
 ```
 9.1)Health 체크 방법     
-- common: 리눅스 명령어 이용   
+- command: 리눅스 명령어 이용   
 - httpGet: HTTP로 컨테이너 안의 웹 주소를 호출하여 체크    
 - tcp: 컨테이너 포트로 접속을 체크하는 방법    
      
