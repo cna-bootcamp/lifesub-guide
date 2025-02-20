@@ -757,6 +757,18 @@ ConfigMap과 Secret의 생성과 사용 방식 차이는 아래와 같습니다.
 시크릿을 만들때 각 사용 용도에 맞게 정확한 시크릿 타입을 지정해 주는 것이 좋습니다.
 ![](images/2025-02-16-17-27-21.png)   
    
+> 참고: 이미지 레지스트리 인증 Secret 생성 예시  
+```
+kubectl create secret docker-registry {시크릿명} \
+--docker-server={이미지 레지스트리 주소} \
+--docker-username={이미지 레지스트리 로그인 사용자명} \
+--docker-password={이미지 레지스트리 로그인 사용자 암호} [-n ${네임스페이스명}]
+
+예) kubectl create secret docker-registry dockerhub \
+--docker-server=docker.io \
+--docker-username=hiondal \
+--docker-password=11111 -n ott
+```
 
 더 자세한 정보와 실습까지 하려면 [환경변수 컨피그맵과 시크릿](https://happycloud-lee.tistory.com/255)을 참조하세요.    
 
