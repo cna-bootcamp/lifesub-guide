@@ -19,6 +19,8 @@
     - [Frontend Application 이미지 푸시](#frontend-application-이미지-푸시)
   - [manifest 실행](#manifest-실행)
     - [ALLOWED\_ORIGINS값 셋팅](#allowed_origins값-셋팅)
+    - [image 명 수정](#image-명-수정)
+    - [Manifest 파일 적용하여 k8s 객체 생성](#manifest-파일-적용하여-k8s-객체-생성)
   - [정상 배포 확인](#정상-배포-확인)
 - [Pod 상태 확인](#pod-상태-확인)
   - [테스트](#테스트)
@@ -368,6 +370,31 @@ echo -n "ALLOWED_ORIGINS: "
 grep "ALLOWED_ORIGINS" lifesub/deployment/manifest/configmaps/common-config.yaml
 ```
 
+### image 명 수정  
+각 Deployment manifes에서 image명을 본인 것으로 변경 합니다.  
+
+ID변수값을 확인합니다.   
+```
+echo $ID
+```
+
+값이 없으면 본인 ID로 셋팅합니다.    
+```
+export ID={본인ID}
+```
+
+이미지 명을 본인 것으로 변경합니다.  
+```
+cd ~/workspace 
+
+sed -i 's/dg0200/${ID}}$/g' lifesub/deployment/manifest/deployments/member-deployment.yaml
+sed -i 's/dg0200/${ID}}$/g' lifesub/deployment/manifest/deployments/mysub-deployment.yaml
+sed -i 's/dg0200/${ID}}$/g' lifesub/deployment/manifest/deployments/recommend-deployment.yaml
+
+sed -i 's/dg0200/${ID}}$/g' lifesub-web/deployment/manifest/deployments/lifesub-web-deployment.yaml
+```
+
+### Manifest 파일 적용하여 k8s 객체 생성  
 먼저 확실하게 최신 이미지가 반영될 수 있도록 기존 파드를 삭제 합니다.   
 Deployment 매니페스트에 imagePullPolicy가 'Always'로 되어 있어 사실 안해도 됩니다.   
 ```
