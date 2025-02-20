@@ -20,11 +20,15 @@
   - [manifest 실행](#manifest-실행)
     - [ALLOWED\_ORIGINS값 셋팅](#allowed_origins값-셋팅)
   - [정상 배포 확인](#정상-배포-확인)
-- [Actuator 설정](#actuator-설정)
-- [Data](#data)
-  - [cm.conf:](#cmconf)
-  - [imgreg.conf:](#imgregconf)
-- [lifesub/deployment/manifest/configmaps/member-config.yaml](#lifesubdeploymentmanifestconfigmapsmember-configyaml)
+- [Pod 상태 확인](#pod-상태-확인)
+  - [테스트](#테스트)
+  - [Kubernetes Manifest 이해](#kubernetes-manifest-이해)
+      - [**1.Ingress**](#1ingress)
+      - [**2.Service**](#2service)
+      - [**3.Workload Controller**](#3workload-controller)
+      - [**4.ConfigMap과 Secret**](#4configmap과-secret)
+      - [**5.PV/PVC**](#5pvpvc)
+  - [Manifest 점검 및 실행](#manifest-점검-및-실행)
 
 ---
 
@@ -407,8 +411,10 @@ k8s 오브젝트를 'k apply'로 생성하거나 'k delete'로 삭제할 때 위
 ```bash
 # Service 상태 확인
 kubectl get svc
+```
 
 # Pod 상태 확인
+```
 kubectl get pods -w
 ```
 '-w' 옵션은 파드의 상태가 변할 때마다 로그처럼 새로운 줄로 파드의 상태를 제공합니다.   
@@ -416,6 +422,7 @@ kubectl get pods -w
 아래 'watch'라는 리눅스 명령이 더 편합니다. 단, 이때는 'k' 대신 'kubectl'을 이용해야 합니다.   
 ```
 watch kubectl get po
+```
 
 | [Top](#목차) |
 
