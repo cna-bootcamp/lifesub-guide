@@ -769,6 +769,38 @@ kubectl create secret docker-registry {시크릿명} \
 --docker-username=hiondal \
 --docker-password=11111 -n ott
 ```
+위와 같이 만든 Secret을 Workload Controller에 아래 예와 같이 지정합니다.   
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-application
+  namespace: my-namespace
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-application
+  template:
+    metadata:
+      labels:
+        app: my-application
+    spec:
+      containers:
+      - name: my-container
+        image: private-registry.example.com/my-app:1.0.0
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+      imagePullSecrets:
+      - name: dockerhub
+```
 
 더 자세한 정보와 실습까지 하려면 [환경변수 컨피그맵과 시크릿](https://happycloud-lee.tistory.com/255)을 참조하세요.    
 
