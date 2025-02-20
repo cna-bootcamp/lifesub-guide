@@ -387,11 +387,11 @@ export ID={본인ID}
 ```
 cd ~/workspace 
 
-sed -i 's/dg0200/${ID}}$/g' lifesub/deployment/manifest/deployments/member-deployment.yaml
-sed -i 's/dg0200/${ID}}$/g' lifesub/deployment/manifest/deployments/mysub-deployment.yaml
-sed -i 's/dg0200/${ID}}$/g' lifesub/deployment/manifest/deployments/recommend-deployment.yaml
+sed -i "s/dg0200/${ID}/g" lifesub/deployment/manifest/deployments/member-deployment.yaml
+sed -i "s/dg0200/${ID}/g" lifesub/deployment/manifest/deployments/mysub-deployment.yaml
+sed -i "s/dg0200/${ID}/g" lifesub/deployment/manifest/deployments/recommend-deployment.yaml
 
-sed -i 's/dg0200/${ID}}$/g' lifesub-web/deployment/manifest/deployments/lifesub-web-deployment.yaml
+sed -i "s/dg0200/${ID}/g" lifesub-web/deployment/manifest/deployments/lifesub-web-deployment.yaml
 ```
 
 ### Manifest 파일 적용하여 k8s 객체 생성  
