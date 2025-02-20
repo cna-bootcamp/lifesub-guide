@@ -274,7 +274,7 @@ docker build \
   --build-arg REACT_APP_RECOMMEND_URL="http://${ingress_host}/recommend" \
   --build-arg BUILD_FOLDER="deployment" \
   --build-arg EXPORT_PORT="18080" \
-  -f deployment/Dockerfile \
+  -f deployment/Dockerfile-lifesub-web \
   -t ${ID}cr.azurecr.io/lifesub/lifesub-web:1.0.0 .
 ```
 
