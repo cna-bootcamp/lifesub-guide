@@ -18,7 +18,6 @@
     - [Backend Application 이미지 푸시](#backend-application-이미지-푸시)
     - [Frontend Application 이미지 푸시](#frontend-application-이미지-푸시)
   - [Kubernetes Manifest 준비](#kubernetes-manifest-준비)
-    - [ALLOWED\_ORIGINS값 셋팅](#allowed_origins값-셋팅)
     - [매니페스트 이해](#매니페스트-이해)
       - [**1.Ingress**](#1ingress)
       - [**2.Service**](#2service)
@@ -27,6 +26,7 @@
       - [**5.PV/PVC**](#5pvpvc)
   - [Manifest 점검 및 실행](#manifest-점검-및-실행)
   - [manifest 실행](#manifest-실행)
+    - [ALLOWED\_ORIGINS값 셋팅](#allowed_origins값-셋팅)
   - [정상 배포 확인](#정상-배포-확인)
   - [테스트](#테스트)
 
@@ -321,51 +321,6 @@ docker push ${ID}cr.azurecr.io/lifesub/lifesub-web:1.0.0
 ## Kubernetes Manifest 준비  
 쿠버네티스 매니페스트 파일들은 이미 deployment 디렉토리 하위에 생성되어 있습니다.  
 백엔드는 IntelliJ에서 오픈하여 확인하고, 프론트엔드는 VSCode에서 오픈하여 확인해 보십시오.   
-각 매니페스트에 대한 설명은 조금 이따 하고 골치 아픈것 먼저 해결합시다.  
-  
-### ALLOWED_ORIGINS값 셋팅  
-바로 CORS 설정을 위한 환경변수 'ALLOWED_ORIGINS' 셋팅입니다.   
-메니페스트 'lifesub/deployment/manifest/configmaps/common-config.yaml'에 정의되어 있습니다.  
-이 변수에는 프론트엔드의 주소가 들어가야 합니다.  
-프론테엔드의 주소는 프론트엔드 서비스 객체의 L/B IP겠죠?   
-즉, 매니페스트를 보면 lifesub-web이라는 서비스 객체의 External IP입니다.  
-이 IP를 알려면 lifesub-web 서비스 객체를 배포할 수 밖에 없습니다.  
-그리고 External IP를 구해서 'common-config.yaml'의 ALLOWED_ORIGINS값을 바꿔줘야 합니다.     
-  
-아래는 이 과정을 자동으로 처리하는 명령들입니다.    
-```
-cd ~/workspace
-# lifesub-web service 생성
-kubectl apply -f lifesub-web/deployment/manifest/services/lifesub-web-service.yaml
-
-# lifesub-web의 External IP가 할당될 때까지 대기
-echo "Waiting for LoadBalancer IP..."
-while [ -z "$web_host" ]; do
-  web_host=$(kubectl get svc lifesub-web -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
-  if [ -z "$web_host" ]; then
-    echo -n "."
-    sleep 2
-  fi
-done
-echo "LoadBalancer IP: ${web_host}"
-
-cat > lifesub/deployment/manifest/configmaps/common-config.yaml << EOF
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: common-config
-data:
-  JPA_DDL_AUTO: update
-  JPA_SHOW_SQL: "true"
-  ALLOWED_ORIGINS: "http://localhost:18080,http://localhost:18081,http://${web_host}"
-EOF
-
-# 반영 확인
-echo -e "\nVerifying configuration:"
-echo "Web Service IP: ${web_host}"
-echo -n "ALLOWED_ORIGINS: "
-grep "ALLOWED_ORIGINS" lifesub/deployment/manifest/configmaps/common-config.yaml
-```
 
 ### 매니페스트 이해
 쿠버네티스 주요 리소스의 흐름 기억하시죠?  
@@ -1048,6 +1003,52 @@ kubectl get svc
 ---
 
 ## manifest 실행
+
+각 매니페스트에 대한 설명은 조금 이따 하고 골치 아픈것 먼저 해결합시다.  
+  
+### ALLOWED_ORIGINS값 셋팅  
+바로 CORS 설정을 위한 환경변수 'ALLOWED_ORIGINS' 셋팅입니다.   
+메니페스트 'lifesub/deployment/manifest/configmaps/common-config.yaml'에 정의되어 있습니다.  
+이 변수에는 프론트엔드의 주소가 들어가야 합니다.  
+프론테엔드의 주소는 프론트엔드 서비스 객체의 L/B IP겠죠?   
+즉, 매니페스트를 보면 lifesub-web이라는 서비스 객체의 External IP입니다.  
+이 IP를 알려면 lifesub-web 서비스 객체를 배포할 수 밖에 없습니다.  
+그리고 External IP를 구해서 'common-config.yaml'의 ALLOWED_ORIGINS값을 바꿔줘야 합니다.     
+  
+아래는 이 과정을 자동으로 처리하는 명령들입니다.    
+```
+cd ~/workspace
+# lifesub-web service 생성
+kubectl apply -f lifesub-web/deployment/manifest/services/lifesub-web-service.yaml
+
+# lifesub-web의 External IP가 할당될 때까지 대기
+echo "Waiting for LoadBalancer IP..."
+while [ -z "$web_host" ]; do
+  web_host=$(kubectl get svc lifesub-web -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
+  if [ -z "$web_host" ]; then
+    echo -n "."
+    sleep 2
+  fi
+done
+echo "LoadBalancer IP: ${web_host}"
+
+cat > lifesub/deployment/manifest/configmaps/common-config.yaml << EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: common-config
+data:
+  JPA_DDL_AUTO: update
+  JPA_SHOW_SQL: "true"
+  ALLOWED_ORIGINS: "http://localhost:18080,http://localhost:18081,http://${web_host}"
+EOF
+
+# 반영 확인
+echo -e "\nVerifying configuration:"
+echo "Web Service IP: ${web_host}"
+echo -n "ALLOWED_ORIGINS: "
+grep "ALLOWED_ORIGINS" lifesub/deployment/manifest/configmaps/common-config.yaml
+```
 
 먼저 확실하게 최신 이미지가 반영될 수 있도록 기존 파드를 삭제 합니다.   
 Deployment 매니페스트에 imagePullPolicy가 'Always'로 되어 있어 사실 안해도 됩니다.   
