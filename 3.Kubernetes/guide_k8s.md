@@ -608,7 +608,7 @@ limits:
     memory: 1024Mi
 ```
     
-**8)ConfigMap과 Secret 동적 주입 **      
+**8)ConfigMap과 Secret 동적 주입**      
 spec.template.spec.containers 항목 밑에 각 컨테이너별로 지정합니다.   
 아래와 같이 외부의 ConfigMap객체와 Secret객체를 지정하면 됩니다.   
 ```
