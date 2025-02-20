@@ -480,7 +480,8 @@ Backend 매니페스트
 path '/member(/|$)(.*)'에서 '(/|$)'부분이 '$1'이고 '(.*)'부분이 '$2'가 됩니다.  
 'nginx.ingress.kubernetes.io/rewrite-target'에 의해서 'member/'부분은 사라지고   
 그 뒤의 값으로 rewriting 됩니다.   
-예) /member/api/auth/login -> http://member:80/api/auth/login    
+예) http://{ingress host}/member/api/auth/login -> http://member:80/api/auth/login    
+
 ```
 apiVersion: networking.k8s.io/v1
 kind: Ingress
