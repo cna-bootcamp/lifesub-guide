@@ -17,18 +17,14 @@
     - [ACR로그인](#acr로그인)
     - [Backend Application 이미지 푸시](#backend-application-이미지-푸시)
     - [Frontend Application 이미지 푸시](#frontend-application-이미지-푸시)
-  - [Kubernetes Manifest 준비](#kubernetes-manifest-준비)
-    - [매니페스트 이해](#매니페스트-이해)
-      - [**1.Ingress**](#1ingress)
-      - [**2.Service**](#2service)
-      - [**3.Workload Controller**](#3workload-controller)
-      - [**4.ConfigMap과 Secret**](#4configmap과-secret)
-      - [**5.PV/PVC**](#5pvpvc)
-  - [Manifest 점검 및 실행](#manifest-점검-및-실행)
   - [manifest 실행](#manifest-실행)
     - [ALLOWED\_ORIGINS값 셋팅](#allowed_origins값-셋팅)
   - [정상 배포 확인](#정상-배포-확인)
-  - [테스트](#테스트)
+- [Actuator 설정](#actuator-설정)
+- [Data](#data)
+  - [cm.conf:](#cmconf)
+  - [imgreg.conf:](#imgregconf)
+- [lifesub/deployment/manifest/configmaps/member-config.yaml](#lifesubdeploymentmanifestconfigmapsmember-configyaml)
 
 ---
 
@@ -318,11 +314,126 @@ docker push ${ID}cr.azurecr.io/lifesub/lifesub-web:1.0.0
 
 ---
 
-## Kubernetes Manifest 준비  
+## manifest 실행
 쿠버네티스 매니페스트 파일들은 이미 deployment 디렉토리 하위에 생성되어 있습니다.  
 백엔드는 IntelliJ에서 오픈하여 확인하고, 프론트엔드는 VSCode에서 오픈하여 확인해 보십시오.   
 
-### 매니페스트 이해
+각 매니페스트에 대한 설명은 조금 이따 하고 골치 아픈것 먼저 해결합시다.  
+  
+### ALLOWED_ORIGINS값 셋팅  
+바로 CORS 설정을 위한 환경변수 'ALLOWED_ORIGINS' 셋팅입니다.   
+메니페스트 'lifesub/deployment/manifest/configmaps/common-config.yaml'에 정의되어 있습니다.  
+이 변수에는 프론트엔드의 주소가 들어가야 합니다.  
+프론테엔드의 주소는 프론트엔드 서비스 객체의 L/B IP겠죠?   
+즉, 매니페스트를 보면 lifesub-web이라는 서비스 객체의 External IP입니다.  
+이 IP를 알려면 lifesub-web 서비스 객체를 배포할 수 밖에 없습니다.  
+그리고 External IP를 구해서 'common-config.yaml'의 ALLOWED_ORIGINS값을 바꿔줘야 합니다.     
+  
+아래는 이 과정을 자동으로 처리하는 명령들입니다.    
+```
+cd ~/workspace
+# lifesub-web service 생성
+kubectl apply -f lifesub-web/deployment/manifest/services/lifesub-web-service.yaml
+
+# lifesub-web의 External IP가 할당될 때까지 대기
+echo "Waiting for LoadBalancer IP..."
+while [ -z "$web_host" ]; do
+  web_host=$(kubectl get svc lifesub-web -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
+  if [ -z "$web_host" ]; then
+    echo -n "."
+    sleep 2
+  fi
+done
+echo "LoadBalancer IP: ${web_host}"
+
+cat > lifesub/deployment/manifest/configmaps/common-config.yaml << EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: common-config
+data:
+  JPA_DDL_AUTO: update
+  JPA_SHOW_SQL: "true"
+  ALLOWED_ORIGINS: "http://localhost:18080,http://localhost:18081,http://${web_host}"
+EOF
+
+# 반영 확인
+echo -e "\nVerifying configuration:"
+echo "Web Service IP: ${web_host}"
+echo -n "ALLOWED_ORIGINS: "
+grep "ALLOWED_ORIGINS" lifesub/deployment/manifest/configmaps/common-config.yaml
+```
+
+먼저 확실하게 최신 이미지가 반영될 수 있도록 기존 파드를 삭제 합니다.   
+Deployment 매니페스트에 imagePullPolicy가 'Always'로 되어 있어 사실 안해도 됩니다.   
+```
+cd ~/workspace
+k delete -f lifesub/deployment/manifest/deployments/
+k delete -f lifesub-web/deployment/manifest/deployments/
+```
+   
+이제 드디어 모든 준비가 완료 되었습니다.   
+모든 오브젝트를 매니페스트 파일로 생성 또는 수정합니다.   
+```bash
+cd ~/workspace
+
+# Ingreess 생성
+kubectl apply -f lifesub/deployment/manifest/ingresses/
+
+# ConfigMap 생성
+kubectl apply -f lifesub/deployment/manifest/configmaps/
+
+# Secret 생성
+kubectl apply -f lifesub/deployment/manifest/secrets/
+
+# Backend 서비스 배포
+kubectl apply -f lifesub/deployment/manifest/deployments/
+kubectl apply -f lifesub/deployment/manifest/services/
+
+# Frontend 서비스 배포
+kubectl apply -f lifesub-web/deployment/manifest/deployments/
+kubectl apply -f lifesub-web/deployment/manifest/services/
+```
+k8s 오브젝트를 'k apply'로 생성하거나 'k delete'로 삭제할 때 위와 같이 디렉토리를 지정해도 됩니다.   
+그럼 자동으로 그 디렉토리안의 매니페스트 파일들을 찾아 처리 합니다.   
+디렉토리 뿐 아니라 접근할 수 있는 URL을 지정할 수도 있습니다.   
+   
+| [Top](#목차) |
+
+--- 
+
+## 정상 배포 확인
+서비스가 정확히 생성되었는지와 파드가 정상적으로 실행되는지 확인합니다.   
+```bash
+# Service 상태 확인
+kubectl get svc
+
+# Pod 상태 확인
+kubectl get pods -w
+```
+'-w' 옵션은 파드의 상태가 변할 때마다 로그처럼 새로운 줄로 파드의 상태를 제공합니다.   
+파드가 많은 경우 보기 불편할 수 있습니다.   
+아래 'watch'라는 리눅스 명령이 더 편합니다. 단, 이때는 'k' 대신 'kubectl'을 이용해야 합니다.   
+```
+watch kubectl get po
+
+| [Top](#목차) |
+
+--- 
+
+## 테스트
+Frontend Service의 External IP로 접속하여 서비스 동작을 확인 합니다.   
+```
+web_host=$(kubectl get svc lifesub-web -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+echo "테스트 주소: http://${web_host}"
+```
+
+| [Top](#목차) |
+
+---
+
+## Kubernetes Manifest 이해     
+
 쿠버네티스 주요 리소스의 흐름 기억하시죠?  
 Ingress -> Service -> Pod (ConfigMap, Secret, PVC 마운트)   
 그리고 Pod를 관리하는 5가지 종류의 Workload Controller가 있습니다.  
@@ -998,123 +1109,6 @@ data:
 kubectl get svc
 ```  
   
-| [Top](#목차) |
-
----
-
-## manifest 실행
-
-각 매니페스트에 대한 설명은 조금 이따 하고 골치 아픈것 먼저 해결합시다.  
-  
-### ALLOWED_ORIGINS값 셋팅  
-바로 CORS 설정을 위한 환경변수 'ALLOWED_ORIGINS' 셋팅입니다.   
-메니페스트 'lifesub/deployment/manifest/configmaps/common-config.yaml'에 정의되어 있습니다.  
-이 변수에는 프론트엔드의 주소가 들어가야 합니다.  
-프론테엔드의 주소는 프론트엔드 서비스 객체의 L/B IP겠죠?   
-즉, 매니페스트를 보면 lifesub-web이라는 서비스 객체의 External IP입니다.  
-이 IP를 알려면 lifesub-web 서비스 객체를 배포할 수 밖에 없습니다.  
-그리고 External IP를 구해서 'common-config.yaml'의 ALLOWED_ORIGINS값을 바꿔줘야 합니다.     
-  
-아래는 이 과정을 자동으로 처리하는 명령들입니다.    
-```
-cd ~/workspace
-# lifesub-web service 생성
-kubectl apply -f lifesub-web/deployment/manifest/services/lifesub-web-service.yaml
-
-# lifesub-web의 External IP가 할당될 때까지 대기
-echo "Waiting for LoadBalancer IP..."
-while [ -z "$web_host" ]; do
-  web_host=$(kubectl get svc lifesub-web -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
-  if [ -z "$web_host" ]; then
-    echo -n "."
-    sleep 2
-  fi
-done
-echo "LoadBalancer IP: ${web_host}"
-
-cat > lifesub/deployment/manifest/configmaps/common-config.yaml << EOF
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: common-config
-data:
-  JPA_DDL_AUTO: update
-  JPA_SHOW_SQL: "true"
-  ALLOWED_ORIGINS: "http://localhost:18080,http://localhost:18081,http://${web_host}"
-EOF
-
-# 반영 확인
-echo -e "\nVerifying configuration:"
-echo "Web Service IP: ${web_host}"
-echo -n "ALLOWED_ORIGINS: "
-grep "ALLOWED_ORIGINS" lifesub/deployment/manifest/configmaps/common-config.yaml
-```
-
-먼저 확실하게 최신 이미지가 반영될 수 있도록 기존 파드를 삭제 합니다.   
-Deployment 매니페스트에 imagePullPolicy가 'Always'로 되어 있어 사실 안해도 됩니다.   
-```
-cd ~/workspace
-k delete -f lifesub/deployment/manifest/deployments/
-k delete -f lifesub-web/deployment/manifest/deployments/
-```
-   
-이제 드디어 모든 준비가 완료 되었습니다.   
-모든 오브젝트를 매니페스트 파일로 생성 또는 수정합니다.   
-```bash
-cd ~/workspace
-
-# Ingreess 생성
-kubectl apply -f lifesub/deployment/manifest/ingresses/
-
-# ConfigMap 생성
-kubectl apply -f lifesub/deployment/manifest/configmaps/
-
-# Secret 생성
-kubectl apply -f lifesub/deployment/manifest/secrets/
-
-# Backend 서비스 배포
-kubectl apply -f lifesub/deployment/manifest/deployments/
-kubectl apply -f lifesub/deployment/manifest/services/
-
-# Frontend 서비스 배포
-kubectl apply -f lifesub-web/deployment/manifest/deployments/
-kubectl apply -f lifesub-web/deployment/manifest/services/
-```
-k8s 오브젝트를 'k apply'로 생성하거나 'k delete'로 삭제할 때 위와 같이 디렉토리를 지정해도 됩니다.   
-그럼 자동으로 그 디렉토리안의 매니페스트 파일들을 찾아 처리 합니다.   
-디렉토리 뿐 아니라 접근할 수 있는 URL을 지정할 수도 있습니다.   
-   
-| [Top](#목차) |
-
---- 
-
-## 정상 배포 확인
-서비스가 정확히 생성되었는지와 파드가 정상적으로 실행되는지 확인합니다.   
-```bash
-# Service 상태 확인
-kubectl get svc
-
-# Pod 상태 확인
-kubectl get pods -w
-```
-'-w' 옵션은 파드의 상태가 변할 때마다 로그처럼 새로운 줄로 파드의 상태를 제공합니다.   
-파드가 많은 경우 보기 불편할 수 있습니다.   
-아래 'watch'라는 리눅스 명령이 더 편합니다. 단, 이때는 'k' 대신 'kubectl'을 이용해야 합니다.   
-```
-watch kubectl get po
-```
-
-| [Top](#목차) |
-
---- 
-
-## 테스트
-Frontend Service의 External IP로 접속하여 서비스 동작을 확인 합니다.   
-```
-web_host=$(kubectl get svc lifesub-web -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
-echo "테스트 주소: http://${web_host}"
-```
-
 | [Top](#목차) |
 
 ---
