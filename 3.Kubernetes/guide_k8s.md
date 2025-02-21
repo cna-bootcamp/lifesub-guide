@@ -8,7 +8,6 @@
   - [ingress controller 추가](#ingress-controller-추가)
   - [사전준비](#사전준비)
   - [네임스페이스 생성](#네임스페이스-생성)
-  - [Database 설치](#database-설치)
   - [Backend Application 실행파일 빌드](#backend-application-실행파일-빌드)
   - [컨테이너 이미지 빌드](#컨테이너-이미지-빌드)
     - [Backend Application](#backend-application)
@@ -17,6 +16,7 @@
     - [ACR로그인](#acr로그인)
     - [Backend Application 이미지 푸시](#backend-application-이미지-푸시)
     - [Frontend Application 이미지 푸시](#frontend-application-이미지-푸시)
+  - [Database 설치](#database-설치)
   - [manifest 실행](#manifest-실행)
     - [ALLOWED\_ORIGINS값 셋팅](#allowed_origins값-셋팅)
     - [image 명 수정](#image-명-수정)
@@ -170,33 +170,6 @@ k create ns ${ID}-lifesub-ns 2>/dev/null || true
 kubens {ID}-lifesub-ns
 ```
 
-## Database 설치
-각 백엔드 서비스를 위한 PostgreSQL DB를 설치합니다.  
-역시 Helm 차트로 설치합니다.  
-
-Helm repository를 추가하고요. 
-```
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm repo update
-```
-
-미리 만들어진 shell파일을 이용하여 설치합니다.  
-```
-cd ~/workspace/lifesub
-chmod +x deployment/database/deploy_db.sh
-./deployment/database/deploy_db.sh ${ID}-lifesub-ns
-```
-
-파드와 서비스가 잘 생성되었는지 확인합니다.  
-```
-k get po 
-k get svc
-```
-
-| [Top](#목차) |
-
----
-
 ## Backend Application 실행파일 빌드    
 
 ```bash
@@ -314,6 +287,44 @@ docker push ${ID}cr.azurecr.io/lifesub/recommend:1.0.0
 
 ```
 docker push ${ID}cr.azurecr.io/lifesub/lifesub-web:1.0.0
+```
+
+| [Top](#목차) |
+
+---
+
+## Database 설치
+각 백엔드 서비스를 위한 PostgreSQL DB를 설치합니다.  
+
+ID변수값을 확인합니다.   
+```
+echo $ID
+```
+
+값이 없으면 본인 ID로 셋팅합니다.    
+```
+export ID={본인ID}
+```
+
+역시 Helm 차트로 설치합니다.  
+
+Helm repository를 추가하고요. 
+```
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update
+```
+
+미리 만들어진 shell파일을 이용하여 설치합니다.  
+```
+cd ~/workspace/lifesub
+chmod +x deployment/database/deploy_db.sh
+./deployment/database/deploy_db.sh ${ID}-lifesub-ns
+```
+
+파드와 서비스가 잘 생성되었는지 확인합니다.  
+```
+k get po 
+k get svc
 ```
 
 | [Top](#목차) |
