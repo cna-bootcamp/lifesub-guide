@@ -385,6 +385,7 @@ member-postgresql-0            1/1     Running   2 (9h ago)      15h
 서비스의 유형이 어떤 것이든 모두 됩니다.
 
 아래와 같이 member 서비스를 포트 Forward 합니다.  
+아래 작업은 Local Ubuntu에서 반드시 해야 합니다.  
 ```
 k port-forward svc/member 8888:80
 ```
