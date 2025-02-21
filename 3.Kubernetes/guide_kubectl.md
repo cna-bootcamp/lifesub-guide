@@ -386,7 +386,7 @@ member-postgresql-0            1/1     Running   2 (9h ago)      15h
 
 아래와 같이 member 서비스를 포트 Forward 합니다.  
 ```
-k port-forward svc member 8888:80
+k port-forward svc/member 8888:80
 ```
 
 웹브라우저에서 http://localhost:8888/swagger-ui.html 으로 접근합니다.  
